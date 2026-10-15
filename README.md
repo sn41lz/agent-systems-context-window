@@ -1,10 +1,10 @@
-# 02 · Context Window Engine
+# Context Window Engine
 
 Explicit context assembly and compaction for long conversations, with cache-aware prompt layout and quality-aware latency evaluation.
 
 **Status: planning — implementation has not started.** This README describes intended scope and acceptance criteria. It does not establish working behavior, completed tests, security guarantees, or measured performance.
 
-Week 2 of an eight-repository agent-systems portfolio.
+Part of an eight-repository agent-systems portfolio.
 
 ## Planned scope
 
@@ -68,11 +68,11 @@ Future results must identify the workload revision, model/provider configuration
 
 ## Portfolio
 
-- [01 · Raw Agent Tool Loop](https://github.com/sn41lz/agent-systems-01-tool-loop)
-- [02 · Context Window Engine](https://github.com/sn41lz/agent-systems-02-context-window)
-- [03 · Hierarchical Agent Memory](https://github.com/sn41lz/agent-systems-03-hierarchical-memory)
-- [04 · Multi-Agent Orchestrator](https://github.com/sn41lz/agent-systems-04-multi-agent-orchestrator)
-- [05 · Agent Evaluation Harness](https://github.com/sn41lz/agent-systems-05-eval-harness)
-- [06 · Secure Code Sandbox](https://github.com/sn41lz/agent-systems-06-secure-sandbox)
-- [07 · Durable Agent Runtime](https://github.com/sn41lz/agent-systems-07-durable-runtime)
-- [08 · Agent Platform API and SDKs](https://github.com/sn41lz/agent-systems-08-api-sdk)
+- [Raw Agent Tool Loop](https://github.com/sn41lz/agent-systems-tool-loop)
+- [Context Window Engine](https://github.com/sn41lz/agent-systems-context-window)
+- [Hierarchical Agent Memory](https://github.com/sn41lz/agent-systems-hierarchical-memory)
+- [Multi-Agent Orchestrator](https://github.com/sn41lz/agent-systems-multi-agent-orchestrator)
+- [Agent Evaluation Harness](https://github.com/sn41lz/agent-systems-eval-harness)
+- [Secure Code Sandbox](https://github.com/sn41lz/agent-systems-secure-sandbox)
+- [Durable Agent Runtime](https://github.com/sn41lz/agent-systems-durable-runtime)
+- [Agent Platform API and SDKs](https://github.com/sn41lz/agent-systems-api-sdk)
