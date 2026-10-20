@@ -1,0 +1,222 @@
+{
+  "generated_at": "2026-10-20T07:48:43.678762+00:00",
+  "workload": "Synthetic launch review; explicit caller-supplied constraints, two revisions and complete historical tool exchanges",
+  "turns": 120,
+  "runs": 3,
+  "strategies": {
+    "full": "Counterfactual full history; may exceed budget; no pinned-state injection",
+    "tail": "Budgeted whole-turn tail eviction; no pinned-state injection",
+    "tiered": "Pinned task state + extract/digest/omit tiers + protected recent turns"
+  },
+  "budget": {
+    "context_tokens": 4096,
+    "output_reserve": 512,
+    "framing_reserve": 128,
+    "min_recent_turns": 2,
+    "chunk_size": 4,
+    "excerpt_tokens": 48,
+    "digest_tokens": 16,
+    "trigger_ratio": 0.85,
+    "max_turns": 10000
+  },
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+    "tiktoken": "0.14.0"
+  },
+  "token_accounting": "Exact o200k_base count of canonical application request JSON; provider framing may differ",
+  "tokenizer_sha256": "446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d",
+  "source_sha256": {
+    "engine.py": "7d8837219a1dfb3ebb81b8af39c1b0d003c2cbeed86501dc4f4c9cc6adbabba1",
+    "models.py": "6adf70b1a974ee95193cc6cc2b037649eef68c0ee331e7127ddd80393867f208",
+    "tokenizer.py": "e939825e11b69ce8600319a61d92607d0dd148b660e0e0c19e9e1d9e083a580d",
+    "scenarios.py": "c2f912f35a89434b189fdfc24fafa05deaf2e79f10303a50bf51acfb8ba59adb",
+    "benchmark.py": "167846ebfeb8fc3889fac9e885a3b50c9fcf25aabd324c5a892fe884a404930d"
+  },
+  "method": {
+    "order": "Rotate strategy order each repetition",
+    "percentile": "linear interpolation at (n-1)*q",
+    "timed": "compile only, including OTel exporter overhead; tokenizer warm before timing",
+    "quality_metric": "Exact latest-constraint value presence in rendered content; not model answer correctness"
+  },
+  "actual_model_api_calls": 0,
+  "actual_model_api_cost_usd": 0,
+  "ttft": "Not measured offline; use the explicit live streaming path",
+  "provider_cache_hits": "Not measured offline; prefix fingerprints are application layout evidence only",
+  "facts": [
+    {
+      "key": "approval",
+      "value": "A human release manager must approve production changes",
+      "revision": 1,
+      "source_turn": "turn-0006",
+      "source_sha256": "6633add2ef0735d8ba0bdf155fa41e50d51156246ad0c8d078390ab42763f838"
+    },
+    {
+      "key": "budget",
+      "value": "EUR 42000",
+      "revision": 2,
+      "source_turn": "turn-0047",
+      "source_sha256": "eeaeb1c062d8703bcc1c8fe6a4be7bd8d60e526a3044b38e2eeffe88c8f42a3d"
+    },
+    {
+      "key": "deadline",
+      "value": "2026-12-07",
+      "revision": 2,
+      "source_turn": "turn-0082",
+      "source_sha256": "5dd8caed0ded4e228a94f1f910254ff4472ed0410335f4d36603555646002ec4"
+    },
+    {
+      "key": "region",
+      "value": "eu-west-1",
+      "revision": 1,
+      "source_turn": "turn-0002",
+      "source_sha256": "f08682aa68d2a98cb21cb62c783a125816f2f53636c752885a4a03850814419b"
+    },
+    {
+      "key": "residency",
+      "value": "Customer data must remain in the EU",
+      "revision": 1,
+      "source_turn": "turn-0004",
+      "source_sha256": "469158df2e1e7f7dd9911d8f8cf6b967913cfcadb182b6c05440ab46bcad55a1"
+    },
+    {
+      "key": "rollback",
+      "value": "Rollback must complete within 90 seconds",
+      "revision": 1,
+      "source_turn": "turn-0005",
+      "source_sha256": "0571b470ae98e0886f46e0707f894369dbb86029076b25bf116f61d2c5bd06ee"
+    }
+  ],
+  "groups": {
+    "full": {
+      "samples": 360,
+      "last_prompt_tokens": 25968,
+      "peak_prompt_tokens": 25968,
+      "budget_violations": 306,
+      "final_constraint_availability": 1.0,
+      "assembly_p50_ms": 2.5535834997754137,
+      "assembly_p95_ms": 4.855853849812775,
+      "prefix_versions": 1,
+      "compaction_events": 0,
+      "buckets": [
+        {
+          "turns": [
+            1,
+            40
+          ],
+          "assembly_p50_ms": 0.9145204999185808,
+          "assembly_p95_ms": 1.6677437503858528,
+          "prompt_p95_tokens": 7839.9,
+          "ttft_p95_ms": null
+        },
+        {
+          "turns": [
+            41,
+            80
+          ],
+          "assembly_p50_ms": 2.5535834997754137,
+          "assembly_p95_ms": 3.3329625003261754,
+          "prompt_p95_tokens": 16657.899999999998,
+          "ttft_p95_ms": null
+        },
+        {
+          "turns": [
+            81,
+            120
+          ],
+          "assembly_p50_ms": 4.277000000001863,
+          "assembly_p95_ms": 5.059357999607528,
+          "prompt_p95_tokens": 25542.899999999998,
+          "ttft_p95_ms": null
+        }
+      ]
+    },
+    "tail": {
+      "samples": 360,
+      "last_prompt_tokens": 3425,
+      "peak_prompt_tokens": 3445,
+      "budget_violations": 0,
+      "final_constraint_availability": 0.0,
+      "assembly_p50_ms": 1.6487079997205,
+      "assembly_p95_ms": 1.914247299600902,
+      "prefix_versions": 1,
+      "compaction_events": 0,
+      "buckets": [
+        {
+          "turns": [
+            1,
+            40
+          ],
+          "assembly_p50_ms": 1.623666499654064,
+          "assembly_p95_ms": 1.9239548001678481,
+          "prompt_p95_tokens": 3425.0,
+          "ttft_p95_ms": null
+        },
+        {
+          "turns": [
+            41,
+            80
+          ],
+          "assembly_p50_ms": 1.6523125000276195,
+          "assembly_p95_ms": 1.7521520499940375,
+          "prompt_p95_tokens": 3425.0,
+          "ttft_p95_ms": null
+        },
+        {
+          "turns": [
+            81,
+            120
+          ],
+          "assembly_p50_ms": 1.654124999731721,
+          "assembly_p95_ms": 1.7733732500346373,
+          "prompt_p95_tokens": 3425.0,
+          "ttft_p95_ms": null
+        }
+      ]
+    },
+    "tiered": {
+      "samples": 360,
+      "last_prompt_tokens": 2860,
+      "peak_prompt_tokens": 2937,
+      "budget_violations": 0,
+      "final_constraint_availability": 1.0,
+      "assembly_p50_ms": 2.1249164997243497,
+      "assembly_p95_ms": 2.271226749917332,
+      "prefix_versions": 1,
+      "compaction_events": 903,
+      "buckets": [
+        {
+          "turns": [
+            1,
+            40
+          ],
+          "assembly_p50_ms": 1.6148749996318656,
+          "assembly_p95_ms": 2.2630854502040165,
+          "prompt_p95_tokens": 2921.35,
+          "ttft_p95_ms": null
+        },
+        {
+          "turns": [
+            41,
+            80
+          ],
+          "assembly_p50_ms": 2.132437500222295,
+          "assembly_p95_ms": 2.2542937498201354,
+          "prompt_p95_tokens": 2927.0,
+          "ttft_p95_ms": null
+        },
+        {
+          "turns": [
+            81,
+            120
+          ],
+          "assembly_p50_ms": 2.132291499947314,
+          "assembly_p95_ms": 2.2763979001410917,
+          "prompt_p95_tokens": 2935.1,
+          "ttft_p95_ms": null
+        }
+      ]
+    }
+  },
+  "tiered_invariants_passed": true
+}

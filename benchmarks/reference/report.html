@@ -1,0 +1,2110 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none';style-src 'unsafe-inline';img-src data:;base-uri 'none';form-action 'none'"><title>Context Window · Continuity Lab</title><style>*{box-sizing:border-box}body{margin:0;background:#0a1019;color:#e6eef8;font:15px/1.65 system-ui,sans-serif}main{max-width:1180px;margin:auto;padding:52px 32px}a{color:#5be0bb}h1{font-size:clamp(32px,5vw,58px);letter-spacing:-.055em;line-height:1.08;margin:24px 0}h2{font-size:21px;letter-spacing:-.02em}.label{color:#5be0bb;font-size:11px;font-weight:800;letter-spacing:.18em}.muted{color:#a4b3c7}.notice{border-left:3px solid #f8cd65;background:#18202c;padding:18px 22px;margin:24px 0;border-radius:8px}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:28px 0}.card,.panel{min-width:0;background:#111c2b;border:1px solid #263349;border-radius:14px;padding:22px}.value{font-size:30px;font-weight:750;letter-spacing:-.04em;color:#5be0bb}.columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}.panel{margin:18px 0}.scroll{overflow-x:auto;max-width:100%}table{width:100%;border-collapse:collapse;text-align:left}th,td{padding:13px 12px;border-bottom:1px solid #28344a}th{color:#a4b3c7;font-size:11px;text-transform:uppercase;letter-spacing:.08em}td{font-size:13px}pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#bfccdf;font-size:12px}.event-log{max-height:440px;overflow-y:auto;padding:0 10px}details{border-top:1px solid #28344a;padding:12px 0}summary{cursor:pointer;font-size:13px}.legend{display:flex;gap:20px;flex-wrap:wrap;font-size:12px}.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}footer{margin-top:26px;font-size:12px;color:#a4b3c7}@media(max-width:850px){.cards{grid-template-columns:1fr 1fr}.columns,.grid{grid-template-columns:1fr}main{padding:30px 18px}}@media(max-width:460px){.card,.panel{padding:16px}.cards{gap:8px}.value{font-size:25px}.label{font-size:9px}.card{overflow-wrap:anywhere}th,td{padding:10px 8px}h1{font-size:34px}}</style></head><body><main><div class="label">CONTEXT WINDOW / CONTINUITY LAB</div><h1>120 turns.<br>One bounded context.</h1><p class="muted">A measured comparison of growing history, whole-turn eviction, and an explicit compaction policy.</p><div class="notice"><strong>Offline evidence, precisely scoped.</strong> Real local tokenization and assembly timings; synthetic conversation data. No model inference, provider cache hits, or TTFT measurements. Constraint availability measures presence, not model answer quality.</div><div class="cards"><div class="card"><div class="label">TIERED INPUT / FINAL</div><div class="value">2,860</div><span class="muted">of 3,456 application tokens</span></div><div class="card"><div class="label">LATEST CONSTRAINTS</div><div class="value">100%</div><span class="muted">available in final context</span></div><div class="card"><div class="label">BUDGET VIOLATIONS</div><div class="value">0</div><span class="muted">tiered strategy</span></div><div class="card"><div class="label">PREFIX VERSIONS</div><div class="value">1</div><span class="muted">stable policy and tool catalogue</span></div></div><div class="legend"><span style="color:#f0ae72">● full history</span><span style="color:#93a5ff">● tail eviction</span><span style="color:#5be0bb">● tiered compaction</span></div><div class="columns"><section class="panel"><h2>The growth problem</h2><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 290" role="img" aria-label="Full history versus bounded context" style="width:100%;height:auto"><rect width="780" height="290" rx="12" fill="#111c2b"/><g font-family="system-ui,sans-serif"><line x1="50" y1="207.42" x2="730" y2="207.42" stroke="#f8cd65" stroke-dasharray="5 5"/><text x="52" y="199.42" fill="#f8cd65" font-size="12">budget 3,456</text><polyline fill="none" stroke="#f0ae72" stroke-width="2.4" points="50.00,228.05 55.71,227.68 61.43,227.30 67.14,226.90 72.86,226.52 78.57,226.13 84.29,224.70 90.00,223.28 95.71,221.43 101.43,220.00 107.14,218.58 112.86,217.16 118.57,215.73 124.29,214.31 130.00,212.88 135.71,211.46 141.43,210.04 147.14,208.19 152.86,206.76 158.57,205.34 164.29,203.91 170.00,202.49 175.71,201.07 181.43,199.64 187.14,198.22 192.86,196.79 198.57,194.95 204.29,193.52 210.00,192.10 215.71,190.67 221.43,189.25 227.14,187.82 232.86,186.40 238.57,184.98 244.29,183.55 250.00,181.70 255.71,180.28 261.43,178.85 267.14,177.43 272.86,176.01 278.57,174.58 284.29,173.16 290.00,171.73 295.71,170.31 301.43,168.46 307.14,167.04 312.86,166.67 318.57,165.25 324.29,163.82 330.00,162.40 335.71,160.97 341.43,159.55 347.14,158.13 352.86,156.28 358.57,154.85 364.29,153.43 370.00,152.01 375.71,150.58 381.43,149.16 387.14,147.73 392.86,146.31 398.57,144.88 404.29,143.04 410.00,141.61 415.71,140.19 421.43,138.76 427.14,137.34 432.86,135.92 438.57,134.49 444.29,133.07 450.00,131.64 455.71,129.79 461.43,128.37 467.14,126.95 472.86,125.52 478.57,124.10 484.29,122.67 490.00,121.25 495.71,119.82 501.43,118.40 507.14,116.55 512.86,116.17 518.57,114.75 524.29,113.32 530.00,111.90 535.71,110.48 541.43,109.05 547.14,107.63 552.86,106.20 558.57,104.36 564.29,102.93 570.00,101.51 575.71,100.08 581.43,98.66 587.14,97.23 592.86,95.81 598.57,94.39 604.29,92.96 610.00,91.11 615.71,89.69 621.43,88.27 627.14,86.84 632.86,85.42 638.57,83.99 644.29,82.57 650.00,81.14 655.71,79.72 661.43,77.87 667.14,76.45 672.86,75.02 678.57,73.60 684.29,72.17 690.00,70.75 695.71,69.33 701.43,67.90 707.14,66.48 712.86,64.63 718.57,63.21 724.29,61.78 730.00,60.36"/><polyline fill="none" stroke="#93a5ff" stroke-width="2.4" points="50.00,228.05 55.71,227.68 61.43,227.30 67.14,226.90 72.86,226.52 78.57,226.13 84.29,224.70 90.00,223.28 95.71,221.43 101.43,220.00 107.14,218.58 112.86,217.16 118.57,215.73 124.29,214.31 130.00,212.88 135.71,211.46 141.43,210.04 147.14,208.19 152.86,207.49 158.57,207.63 164.29,207.63 170.00,207.63 175.71,208.05 181.43,208.05 187.14,208.05 192.86,208.05 198.57,207.63 204.29,207.63 210.00,207.63 215.71,207.63 221.43,207.63 227.14,208.05 232.86,208.05 238.57,208.05 244.29,208.05 250.00,207.63 255.71,207.63 261.43,207.63 267.14,207.63 272.86,207.63 278.57,208.05 284.29,208.05 290.00,208.05 295.71,208.05 301.43,207.63 307.14,207.63 312.86,208.68 318.57,208.68 324.29,208.68 330.00,209.11 335.71,207.68 341.43,207.68 347.14,207.68 352.86,208.68 358.57,208.68 364.29,208.68 370.00,208.68 375.71,208.68 381.43,209.11 387.14,207.68 392.86,207.68 398.57,208.05 404.29,207.63 410.00,207.63 415.71,207.63 421.43,207.63 427.14,207.63 432.86,208.05 438.57,208.05 444.29,208.05 450.00,208.05 455.71,207.63 461.43,207.63 467.14,207.63 472.86,207.63 478.57,207.63 484.29,208.05 490.00,208.05 495.71,208.05 501.43,208.05 507.14,207.63 512.86,208.67 518.57,208.67 524.29,208.67 530.00,208.67 535.71,209.10 541.43,207.67 547.14,207.67 552.86,207.67 558.57,208.67 564.29,208.67 570.00,208.67 575.71,208.67 581.43,208.67 587.14,209.10 592.86,207.67 598.57,208.05 604.29,208.05 610.00,207.63 615.71,207.63 621.43,207.63 627.14,207.63 632.86,207.63 638.57,208.05 644.29,208.05 650.00,208.05 655.71,208.05 661.43,207.63 667.14,207.63 672.86,207.63 678.57,207.63 684.29,207.63 690.00,208.05 695.71,208.05 701.43,208.05 707.14,208.05 712.86,207.63 718.57,207.63 724.29,207.63 730.00,207.63"/><polyline fill="none" stroke="#5be0bb" stroke-width="2.4" points="50.00,227.52 55.71,226.72 61.43,225.90 67.14,225.00 72.86,224.15 78.57,223.30 84.29,221.88 90.00,220.46 95.71,218.61 101.43,217.18 107.14,215.76 112.86,214.33 118.57,212.91 124.29,211.49 130.00,213.62 135.71,212.19 141.43,211.66 147.14,212.74 152.86,211.32 158.57,210.92 164.29,212.70 170.00,211.28 175.71,211.30 181.43,211.32 187.14,212.20 192.86,210.94 198.57,211.19 204.29,211.07 210.00,211.22 215.71,211.36 221.43,211.30 227.14,211.30 232.86,211.29 238.57,211.32 244.29,211.30 250.00,210.86 255.71,210.87 261.43,211.30 267.14,211.30 272.86,211.32 278.57,211.33 284.29,211.30 290.00,211.30 295.71,211.28 301.43,210.92 307.14,210.92 312.86,210.89 318.57,211.01 324.29,211.30 330.00,211.32 335.71,211.29 341.43,211.30 347.14,211.28 352.86,210.89 358.57,210.89 364.29,211.31 370.00,211.29 375.71,211.31 381.43,211.35 387.14,211.36 392.86,211.37 398.57,211.34 404.29,210.88 410.00,210.88 415.71,211.29 421.43,211.30 427.14,211.28 432.86,211.27 438.57,211.28 444.29,211.28 450.00,211.28 455.71,210.87 461.43,210.90 467.14,211.33 472.86,211.32 478.57,211.29 484.29,211.26 490.00,211.24 495.71,211.24 501.43,211.26 507.14,210.83 512.86,211.19 518.57,210.97 524.29,211.26 530.00,211.28 535.71,211.27 541.43,211.25 547.14,211.24 552.86,211.23 558.57,210.81 564.29,210.81 570.00,211.27 575.71,211.30 581.43,211.30 587.14,211.32 592.86,211.33 598.57,211.29 604.29,211.31 610.00,210.94 615.71,210.90 621.43,211.34 627.14,211.35 632.86,211.34 638.57,211.38 644.29,211.37 650.00,211.37 655.71,211.36 661.43,210.91 667.14,210.87 672.86,211.32 678.57,211.32 684.29,211.35 690.00,211.32 695.71,211.34 701.43,211.36 707.14,211.30 712.86,210.92 718.57,210.88 724.29,211.30 730.00,211.32"/><text x="50.00" y="255" fill="#b3bed0" font-size="12">1</text><text x="387.14" y="255" fill="#b3bed0" font-size="12">60</text><text x="730.00" y="255" fill="#b3bed0" font-size="12">120</text><text x="50" y="22" fill="#b3bed0" font-size="12">Application input tokens</text><text x="660" y="277" fill="#b3bed0" font-size="12">Turn number</text></g></svg></section><section class="panel"><h2>Inside the budget</h2><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 290" role="img" aria-label="Bounded strategies" style="width:100%;height:auto"><rect width="780" height="290" rx="12" fill="#111c2b"/><g font-family="system-ui,sans-serif"><line x1="50" y1="60.36" x2="730" y2="60.36" stroke="#f8cd65" stroke-dasharray="5 5"/><text x="52" y="52.36" fill="#f8cd65" font-size="12">budget 3,456</text><polyline fill="none" stroke="#93a5ff" stroke-width="2.4" points="50.00,215.32 55.71,212.57 61.43,209.73 67.14,206.73 72.86,203.84 78.57,200.89 84.29,190.19 90.00,179.49 95.71,165.60 101.43,154.90 107.14,144.20 112.86,133.50 118.57,122.80 124.29,112.09 130.00,101.39 135.71,90.69 141.43,79.99 147.14,66.10 152.86,60.90 158.57,61.88 164.29,61.88 170.00,61.88 175.71,65.07 181.43,65.07 187.14,65.07 192.86,65.07 198.57,61.88 204.29,61.88 210.00,61.88 215.71,61.88 221.43,61.88 227.14,65.07 232.86,65.07 238.57,65.07 244.29,65.07 250.00,61.88 255.71,61.88 261.43,61.88 267.14,61.88 272.86,61.88 278.57,65.07 284.29,65.07 290.00,65.07 295.71,65.07 301.43,61.88 307.14,61.88 312.86,69.83 318.57,69.83 324.29,69.83 330.00,73.02 335.71,62.32 341.43,62.32 347.14,62.32 352.86,69.83 358.57,69.83 364.29,69.83 370.00,69.83 375.71,69.83 381.43,73.02 387.14,62.32 392.86,62.32 398.57,65.07 404.29,61.88 410.00,61.88 415.71,61.88 421.43,61.88 427.14,61.88 432.86,65.07 438.57,65.07 444.29,65.07 450.00,65.07 455.71,61.88 461.43,61.88 467.14,61.88 472.86,61.88 478.57,61.88 484.29,65.07 490.00,65.07 495.71,65.07 501.43,65.07 507.14,61.88 512.86,69.73 518.57,69.73 524.29,69.73 530.00,69.73 535.71,72.92 541.43,62.22 547.14,62.22 552.86,62.22 558.57,69.73 564.29,69.73 570.00,69.73 575.71,69.73 581.43,69.73 587.14,72.92 592.86,62.22 598.57,65.07 604.29,65.07 610.00,61.88 615.71,61.88 621.43,61.88 627.14,61.88 632.86,61.88 638.57,65.07 644.29,65.07 650.00,65.07 655.71,65.07 661.43,61.88 667.14,61.88 672.86,61.88 678.57,61.88 684.29,61.88 690.00,65.07 695.71,65.07 701.43,65.07 707.14,65.07 712.86,61.88 718.57,61.88 724.29,61.88 730.00,61.88"/><polyline fill="none" stroke="#5be0bb" stroke-width="2.4" points="50.00,211.35 55.71,205.36 61.43,199.17 67.14,192.40 72.86,186.07 78.57,179.69 84.29,168.99 90.00,158.28 95.71,144.39 101.43,133.69 107.14,122.99 112.86,112.29 118.57,101.59 124.29,90.89 130.00,106.89 135.71,96.19 141.43,92.17 147.14,100.31 152.86,89.61 158.57,86.62 164.29,100.02 170.00,89.32 175.71,89.47 181.43,89.61 187.14,96.29 192.86,86.77 198.57,88.68 204.29,87.75 210.00,88.93 215.71,89.96 221.43,89.51 227.14,89.51 232.86,89.42 238.57,89.66 244.29,89.47 250.00,86.18 255.71,86.27 261.43,89.47 267.14,89.47 272.86,89.66 278.57,89.71 284.29,89.47 290.00,89.51 295.71,89.37 301.43,86.62 307.14,86.62 312.86,86.42 318.57,87.31 324.29,89.47 330.00,89.66 335.71,89.42 341.43,89.47 347.14,89.37 352.86,86.37 358.57,86.42 364.29,89.56 370.00,89.42 375.71,89.56 381.43,89.86 387.14,89.96 392.86,90.01 398.57,89.76 404.29,86.32 410.00,86.32 415.71,89.42 421.43,89.47 427.14,89.37 432.86,89.27 438.57,89.32 444.29,89.37 450.00,89.37 455.71,86.23 461.43,86.47 467.14,89.71 472.86,89.66 478.57,89.42 484.29,89.22 490.00,89.07 495.71,89.02 501.43,89.17 507.14,85.93 512.86,88.68 518.57,87.01 524.29,89.17 530.00,89.37 535.71,89.27 541.43,89.12 547.14,89.02 552.86,88.97 558.57,85.83 564.29,85.83 570.00,89.27 575.71,89.51 581.43,89.47 587.14,89.61 592.86,89.71 598.57,89.42 604.29,89.56 610.00,86.77 615.71,86.47 621.43,89.81 627.14,89.86 632.86,89.76 638.57,90.10 644.29,90.01 650.00,90.01 655.71,89.91 661.43,86.57 667.14,86.27 672.86,89.66 678.57,89.66 684.29,89.86 690.00,89.66 695.71,89.81 701.43,89.96 707.14,89.51 712.86,86.62 718.57,86.32 724.29,89.47 730.00,89.61"/><text x="50.00" y="255" fill="#b3bed0" font-size="12">1</text><text x="387.14" y="255" fill="#b3bed0" font-size="12">60</text><text x="730.00" y="255" fill="#b3bed0" font-size="12">120</text><text x="50" y="22" fill="#b3bed0" font-size="12">Application input tokens</text><text x="660" y="277" fill="#b3bed0" font-size="12">Turn number</text></g></svg></section></div><section class="panel"><h2>Matched workload, different policies</h2><div class="scroll"><table><tr><th>Policy</th><th>Final tokens</th><th>Over budget</th><th>Constraints available</th><th>Assembly p95</th></tr><tr><td>full</td><td>25,968</td><td>306</td><td>100%</td><td>4.86 ms</td></tr><tr><td>tail</td><td>3,425</td><td>0</td><td>0%</td><td>1.91 ms</td></tr><tr><td>tiered</td><td>2,860</td><td>0</td><td>100%</td><td>2.27 ms</td></tr></table></div><p class="muted">3 repetition(s) × 120 turns per policy. Full history is a counterfactual baseline when it exceeds the configured budget. Timings include tracing overhead.</p></section><section class="panel"><h2>Current task state survives historical revisions</h2><div class="scroll"><table><tr><th>Constraint</th><th>Current value</th><th>Provenance</th></tr><tr><td>approval</td><td>A human release manager must approve production changes</td><td>r1 · turn-0006</td></tr><tr><td>budget</td><td>EUR 42000</td><td>r2 · turn-0047</td></tr><tr><td>deadline</td><td>2026-12-07</td><td>r2 · turn-0082</td></tr><tr><td>region</td><td>eu-west-1</td><td>r1 · turn-0002</td></tr><tr><td>residency</td><td>Customer data must remain in the EU</td><td>r1 · turn-0004</td></tr><tr><td>rollback</td><td>Rollback must complete within 90 seconds</td><td>r1 · turn-0005</td></tr></table></div><p class="muted">Facts are explicitly supplied by the caller. Extraction from natural language is not inferred or benchmarked.</p></section><div class="grid"><section class="panel"><h2>Compaction decisions</h2><p class="muted">Extract → digest → omit. These are lossy historical views; pinned task state is protected.</p><details><summary>Inspect 301 recorded decisions</summary><div class="event-log"><details><summary>extract · turn-0001 → turn-0004</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 4,
+  &quot;first_turn&quot;: &quot;turn-0001&quot;,
+  &quot;last_turn&quot;: &quot;turn-0004&quot;,
+  &quot;source_root&quot;: &quot;65e7c9ce8e402eac74f62675b6642346a8a4d0c38c038c0a791b35b687ffc652&quot;
+}</pre></details><details><summary>extract · turn-0005 → turn-0008</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 4,
+  &quot;first_turn&quot;: &quot;turn-0005&quot;,
+  &quot;last_turn&quot;: &quot;turn-0008&quot;,
+  &quot;source_root&quot;: &quot;385d105319d4132bcfaa24a05b20db6f26943e1650b2a71fe27e2a6989709d8b&quot;
+}</pre></details><details><summary>extract · turn-0009 → turn-0012</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 4,
+  &quot;first_turn&quot;: &quot;turn-0009&quot;,
+  &quot;last_turn&quot;: &quot;turn-0012&quot;,
+  &quot;source_root&quot;: &quot;74966d0828eb43b9322ce82dfe2447a4f6a6c648ea97abdf8e09d645dffe6413&quot;
+}</pre></details><details><summary>extract · turn-0013 → turn-0013</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0013&quot;,
+  &quot;last_turn&quot;: &quot;turn-0013&quot;,
+  &quot;source_root&quot;: &quot;a44dd2371e52055e475deee11dd08695b662ba6373946e40bd539ef38b654df1&quot;
+}</pre></details><details><summary>digest · turn-0001 → turn-0004</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 4,
+  &quot;first_turn&quot;: &quot;turn-0001&quot;,
+  &quot;last_turn&quot;: &quot;turn-0004&quot;,
+  &quot;source_root&quot;: &quot;65e7c9ce8e402eac74f62675b6642346a8a4d0c38c038c0a791b35b687ffc652&quot;
+}</pre></details><details><summary>extract · turn-0014 → turn-0015</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 2,
+  &quot;first_turn&quot;: &quot;turn-0014&quot;,
+  &quot;last_turn&quot;: &quot;turn-0015&quot;,
+  &quot;source_root&quot;: &quot;fa4f62db22b5fa99587032203e2d95a39bd31ab483de83bf3bf888ec1bca0978&quot;
+}</pre></details><details><summary>extract · turn-0016 → turn-0016</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0016&quot;,
+  &quot;last_turn&quot;: &quot;turn-0016&quot;,
+  &quot;source_root&quot;: &quot;f202ad6a40c1ab6efbd8f9329c2d77c1e19b84122151b522ae7cb37aa8ab9140&quot;
+}</pre></details><details><summary>digest · turn-0005 → turn-0008</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 4,
+  &quot;first_turn&quot;: &quot;turn-0005&quot;,
+  &quot;last_turn&quot;: &quot;turn-0008&quot;,
+  &quot;source_root&quot;: &quot;385d105319d4132bcfaa24a05b20db6f26943e1650b2a71fe27e2a6989709d8b&quot;
+}</pre></details><details><summary>extract · turn-0017 → turn-0018</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 2,
+  &quot;first_turn&quot;: &quot;turn-0017&quot;,
+  &quot;last_turn&quot;: &quot;turn-0018&quot;,
+  &quot;source_root&quot;: &quot;740af8b76bd99f2d6993d6aeb7060e3559b588e5f846e68d840d25040d90244c&quot;
+}</pre></details><details><summary>extract · turn-0019 → turn-0019</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0019&quot;,
+  &quot;last_turn&quot;: &quot;turn-0019&quot;,
+  &quot;source_root&quot;: &quot;c7cd4590a535240b31be649160d5313e5f9c63007c104a5b3c6b5df6b263662a&quot;
+}</pre></details><details><summary>digest · turn-0009 → turn-0012</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 4,
+  &quot;first_turn&quot;: &quot;turn-0009&quot;,
+  &quot;last_turn&quot;: &quot;turn-0012&quot;,
+  &quot;source_root&quot;: &quot;74966d0828eb43b9322ce82dfe2447a4f6a6c648ea97abdf8e09d645dffe6413&quot;
+}</pre></details><details><summary>extract · turn-0020 → turn-0021</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 2,
+  &quot;first_turn&quot;: &quot;turn-0020&quot;,
+  &quot;last_turn&quot;: &quot;turn-0021&quot;,
+  &quot;source_root&quot;: &quot;ff8a8b2f50dae11dffb42aad9ce0e67c1ad2bd872de8067d810b129d17b48812&quot;
+}</pre></details><details><summary>digest · turn-0013 → turn-0013</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0013&quot;,
+  &quot;last_turn&quot;: &quot;turn-0013&quot;,
+  &quot;source_root&quot;: &quot;a44dd2371e52055e475deee11dd08695b662ba6373946e40bd539ef38b654df1&quot;
+}</pre></details><details><summary>extract · turn-0022 → turn-0022</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0022&quot;,
+  &quot;last_turn&quot;: &quot;turn-0022&quot;,
+  &quot;source_root&quot;: &quot;9c02c5aeb95a6cb6b4e71aa850ce0309491522f7f5e8a9698e8c8566873dfa86&quot;
+}</pre></details><details><summary>digest · turn-0014 → turn-0015</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 2,
+  &quot;first_turn&quot;: &quot;turn-0014&quot;,
+  &quot;last_turn&quot;: &quot;turn-0015&quot;,
+  &quot;source_root&quot;: &quot;fa4f62db22b5fa99587032203e2d95a39bd31ab483de83bf3bf888ec1bca0978&quot;
+}</pre></details><details><summary>extract · turn-0023 → turn-0023</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0023&quot;,
+  &quot;last_turn&quot;: &quot;turn-0023&quot;,
+  &quot;source_root&quot;: &quot;f66b6743da2169d9ee53645727f0962b8fbdb2d6c534ad9076cfc423bcae8444&quot;
+}</pre></details><details><summary>digest · turn-0016 → turn-0016</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0016&quot;,
+  &quot;last_turn&quot;: &quot;turn-0016&quot;,
+  &quot;source_root&quot;: &quot;f202ad6a40c1ab6efbd8f9329c2d77c1e19b84122151b522ae7cb37aa8ab9140&quot;
+}</pre></details><details><summary>digest · turn-0017 → turn-0018</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 2,
+  &quot;first_turn&quot;: &quot;turn-0017&quot;,
+  &quot;last_turn&quot;: &quot;turn-0018&quot;,
+  &quot;source_root&quot;: &quot;740af8b76bd99f2d6993d6aeb7060e3559b588e5f846e68d840d25040d90244c&quot;
+}</pre></details><details><summary>extract · turn-0024 → turn-0024</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0024&quot;,
+  &quot;last_turn&quot;: &quot;turn-0024&quot;,
+  &quot;source_root&quot;: &quot;3f90dfc80c76efeb6d17da644ff4b42d67e901a4569eb736034eda0f6adf057f&quot;
+}</pre></details><details><summary>extract · turn-0025 → turn-0025</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0025&quot;,
+  &quot;last_turn&quot;: &quot;turn-0025&quot;,
+  &quot;source_root&quot;: &quot;a27087314016f8af0ee02708886bea12ae8bd929c60e81bd3d3e8c0a062153bc&quot;
+}</pre></details><details><summary>digest · turn-0019 → turn-0019</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0019&quot;,
+  &quot;last_turn&quot;: &quot;turn-0019&quot;,
+  &quot;source_root&quot;: &quot;c7cd4590a535240b31be649160d5313e5f9c63007c104a5b3c6b5df6b263662a&quot;
+}</pre></details><details><summary>digest · turn-0020 → turn-0021</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 2,
+  &quot;first_turn&quot;: &quot;turn-0020&quot;,
+  &quot;last_turn&quot;: &quot;turn-0021&quot;,
+  &quot;source_root&quot;: &quot;ff8a8b2f50dae11dffb42aad9ce0e67c1ad2bd872de8067d810b129d17b48812&quot;
+}</pre></details><details><summary>extract · turn-0026 → turn-0026</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0026&quot;,
+  &quot;last_turn&quot;: &quot;turn-0026&quot;,
+  &quot;source_root&quot;: &quot;b48e55b78dddb1f1cb892b2dc6b15b691e519f246d2dba06e9482c8b10402b4b&quot;
+}</pre></details><details><summary>digest · turn-0022 → turn-0022</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0022&quot;,
+  &quot;last_turn&quot;: &quot;turn-0022&quot;,
+  &quot;source_root&quot;: &quot;9c02c5aeb95a6cb6b4e71aa850ce0309491522f7f5e8a9698e8c8566873dfa86&quot;
+}</pre></details><details><summary>digest · turn-0023 → turn-0023</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0023&quot;,
+  &quot;last_turn&quot;: &quot;turn-0023&quot;,
+  &quot;source_root&quot;: &quot;f66b6743da2169d9ee53645727f0962b8fbdb2d6c534ad9076cfc423bcae8444&quot;
+}</pre></details><details><summary>extract · turn-0027 → turn-0027</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0027&quot;,
+  &quot;last_turn&quot;: &quot;turn-0027&quot;,
+  &quot;source_root&quot;: &quot;b082d25f0cc271666dddc8daad5b05ecfe39fa1bd3dc41d16904312cb84666fe&quot;
+}</pre></details><details><summary>digest · turn-0024 → turn-0024</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0024&quot;,
+  &quot;last_turn&quot;: &quot;turn-0024&quot;,
+  &quot;source_root&quot;: &quot;3f90dfc80c76efeb6d17da644ff4b42d67e901a4569eb736034eda0f6adf057f&quot;
+}</pre></details><details><summary>digest · turn-0025 → turn-0025</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0025&quot;,
+  &quot;last_turn&quot;: &quot;turn-0025&quot;,
+  &quot;source_root&quot;: &quot;a27087314016f8af0ee02708886bea12ae8bd929c60e81bd3d3e8c0a062153bc&quot;
+}</pre></details><details><summary>extract · turn-0028 → turn-0028</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0028&quot;,
+  &quot;last_turn&quot;: &quot;turn-0028&quot;,
+  &quot;source_root&quot;: &quot;0b0495e264b8e40b1b0720731c9bddeb860d3d773bb211e945bc44d08be4cfb1&quot;
+}</pre></details><details><summary>digest · turn-0026 → turn-0026</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0026&quot;,
+  &quot;last_turn&quot;: &quot;turn-0026&quot;,
+  &quot;source_root&quot;: &quot;b48e55b78dddb1f1cb892b2dc6b15b691e519f246d2dba06e9482c8b10402b4b&quot;
+}</pre></details><details><summary>digest · turn-0027 → turn-0027</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0027&quot;,
+  &quot;last_turn&quot;: &quot;turn-0027&quot;,
+  &quot;source_root&quot;: &quot;b082d25f0cc271666dddc8daad5b05ecfe39fa1bd3dc41d16904312cb84666fe&quot;
+}</pre></details><details><summary>extract · turn-0029 → turn-0029</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0029&quot;,
+  &quot;last_turn&quot;: &quot;turn-0029&quot;,
+  &quot;source_root&quot;: &quot;947d83c1669ba254b01ce29d3525af71c5093355055e0081f85efa4b0b408621&quot;
+}</pre></details><details><summary>digest · turn-0028 → turn-0028</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0028&quot;,
+  &quot;last_turn&quot;: &quot;turn-0028&quot;,
+  &quot;source_root&quot;: &quot;0b0495e264b8e40b1b0720731c9bddeb860d3d773bb211e945bc44d08be4cfb1&quot;
+}</pre></details><details><summary>digest · turn-0029 → turn-0029</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0029&quot;,
+  &quot;last_turn&quot;: &quot;turn-0029&quot;,
+  &quot;source_root&quot;: &quot;947d83c1669ba254b01ce29d3525af71c5093355055e0081f85efa4b0b408621&quot;
+}</pre></details><details><summary>extract · turn-0030 → turn-0030</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0030&quot;,
+  &quot;last_turn&quot;: &quot;turn-0030&quot;,
+  &quot;source_root&quot;: &quot;180f79a467677456d03f1c3792b3fb1537471d059e7150a5b6e58f9f1cb53c38&quot;
+}</pre></details><details><summary>digest · turn-0030 → turn-0030</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0030&quot;,
+  &quot;last_turn&quot;: &quot;turn-0030&quot;,
+  &quot;source_root&quot;: &quot;180f79a467677456d03f1c3792b3fb1537471d059e7150a5b6e58f9f1cb53c38&quot;
+}</pre></details><details><summary>omit · turn-0001 → turn-0004</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 4,
+  &quot;first_turn&quot;: &quot;turn-0001&quot;,
+  &quot;last_turn&quot;: &quot;turn-0004&quot;,
+  &quot;source_root&quot;: &quot;65e7c9ce8e402eac74f62675b6642346a8a4d0c38c038c0a791b35b687ffc652&quot;
+}</pre></details><details><summary>extract · turn-0031 → turn-0031</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0031&quot;,
+  &quot;last_turn&quot;: &quot;turn-0031&quot;,
+  &quot;source_root&quot;: &quot;4332d52ef18f2d0c1426fa4c089db9a5c9323c34a876730ff9e5b42f90478888&quot;
+}</pre></details><details><summary>digest · turn-0031 → turn-0031</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0031&quot;,
+  &quot;last_turn&quot;: &quot;turn-0031&quot;,
+  &quot;source_root&quot;: &quot;4332d52ef18f2d0c1426fa4c089db9a5c9323c34a876730ff9e5b42f90478888&quot;
+}</pre></details><details><summary>omit · turn-0005 → turn-0008</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 4,
+  &quot;first_turn&quot;: &quot;turn-0005&quot;,
+  &quot;last_turn&quot;: &quot;turn-0008&quot;,
+  &quot;source_root&quot;: &quot;385d105319d4132bcfaa24a05b20db6f26943e1650b2a71fe27e2a6989709d8b&quot;
+}</pre></details><details><summary>extract · turn-0032 → turn-0032</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0032&quot;,
+  &quot;last_turn&quot;: &quot;turn-0032&quot;,
+  &quot;source_root&quot;: &quot;9614faabe9829cb8defdd53272674921caabbf072448a5efc9df9b43c616dbae&quot;
+}</pre></details><details><summary>digest · turn-0032 → turn-0032</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0032&quot;,
+  &quot;last_turn&quot;: &quot;turn-0032&quot;,
+  &quot;source_root&quot;: &quot;9614faabe9829cb8defdd53272674921caabbf072448a5efc9df9b43c616dbae&quot;
+}</pre></details><details><summary>omit · turn-0009 → turn-0012</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 4,
+  &quot;first_turn&quot;: &quot;turn-0009&quot;,
+  &quot;last_turn&quot;: &quot;turn-0012&quot;,
+  &quot;source_root&quot;: &quot;74966d0828eb43b9322ce82dfe2447a4f6a6c648ea97abdf8e09d645dffe6413&quot;
+}</pre></details><details><summary>extract · turn-0033 → turn-0033</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0033&quot;,
+  &quot;last_turn&quot;: &quot;turn-0033&quot;,
+  &quot;source_root&quot;: &quot;e234e3e66f8e8d42da2b761c30de619741470bda808868ff5fd7ba7866be2861&quot;
+}</pre></details><details><summary>digest · turn-0033 → turn-0033</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0033&quot;,
+  &quot;last_turn&quot;: &quot;turn-0033&quot;,
+  &quot;source_root&quot;: &quot;e234e3e66f8e8d42da2b761c30de619741470bda808868ff5fd7ba7866be2861&quot;
+}</pre></details><details><summary>omit · turn-0013 → turn-0013</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0013&quot;,
+  &quot;last_turn&quot;: &quot;turn-0013&quot;,
+  &quot;source_root&quot;: &quot;a44dd2371e52055e475deee11dd08695b662ba6373946e40bd539ef38b654df1&quot;
+}</pre></details><details><summary>extract · turn-0034 → turn-0034</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0034&quot;,
+  &quot;last_turn&quot;: &quot;turn-0034&quot;,
+  &quot;source_root&quot;: &quot;7691d362cf30897d2aa7de393192d79ef45f45a45c0e6e1c3bb8aac67299855e&quot;
+}</pre></details><details><summary>digest · turn-0034 → turn-0034</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0034&quot;,
+  &quot;last_turn&quot;: &quot;turn-0034&quot;,
+  &quot;source_root&quot;: &quot;7691d362cf30897d2aa7de393192d79ef45f45a45c0e6e1c3bb8aac67299855e&quot;
+}</pre></details><details><summary>omit · turn-0014 → turn-0015</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 2,
+  &quot;first_turn&quot;: &quot;turn-0014&quot;,
+  &quot;last_turn&quot;: &quot;turn-0015&quot;,
+  &quot;source_root&quot;: &quot;fa4f62db22b5fa99587032203e2d95a39bd31ab483de83bf3bf888ec1bca0978&quot;
+}</pre></details><details><summary>extract · turn-0035 → turn-0035</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0035&quot;,
+  &quot;last_turn&quot;: &quot;turn-0035&quot;,
+  &quot;source_root&quot;: &quot;4e203edc288a8726f17a16bc838a2565f98ebd972eecfd5135911c807f8d4df6&quot;
+}</pre></details><details><summary>digest · turn-0035 → turn-0035</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0035&quot;,
+  &quot;last_turn&quot;: &quot;turn-0035&quot;,
+  &quot;source_root&quot;: &quot;4e203edc288a8726f17a16bc838a2565f98ebd972eecfd5135911c807f8d4df6&quot;
+}</pre></details><details><summary>omit · turn-0016 → turn-0016</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0016&quot;,
+  &quot;last_turn&quot;: &quot;turn-0016&quot;,
+  &quot;source_root&quot;: &quot;f202ad6a40c1ab6efbd8f9329c2d77c1e19b84122151b522ae7cb37aa8ab9140&quot;
+}</pre></details><details><summary>extract · turn-0036 → turn-0036</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0036&quot;,
+  &quot;last_turn&quot;: &quot;turn-0036&quot;,
+  &quot;source_root&quot;: &quot;5564c5a9043c7e6edcacaf4fd9b0c54f75695486cd815319c50db8d025c99a01&quot;
+}</pre></details><details><summary>digest · turn-0036 → turn-0036</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0036&quot;,
+  &quot;last_turn&quot;: &quot;turn-0036&quot;,
+  &quot;source_root&quot;: &quot;5564c5a9043c7e6edcacaf4fd9b0c54f75695486cd815319c50db8d025c99a01&quot;
+}</pre></details><details><summary>omit · turn-0017 → turn-0018</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 2,
+  &quot;first_turn&quot;: &quot;turn-0017&quot;,
+  &quot;last_turn&quot;: &quot;turn-0018&quot;,
+  &quot;source_root&quot;: &quot;740af8b76bd99f2d6993d6aeb7060e3559b588e5f846e68d840d25040d90244c&quot;
+}</pre></details><details><summary>extract · turn-0037 → turn-0037</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0037&quot;,
+  &quot;last_turn&quot;: &quot;turn-0037&quot;,
+  &quot;source_root&quot;: &quot;a8d8818faae8d27df98292b63f0a2651d4f9450be000517530ebd3e7b4a50271&quot;
+}</pre></details><details><summary>digest · turn-0037 → turn-0037</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0037&quot;,
+  &quot;last_turn&quot;: &quot;turn-0037&quot;,
+  &quot;source_root&quot;: &quot;a8d8818faae8d27df98292b63f0a2651d4f9450be000517530ebd3e7b4a50271&quot;
+}</pre></details><details><summary>omit · turn-0019 → turn-0019</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0019&quot;,
+  &quot;last_turn&quot;: &quot;turn-0019&quot;,
+  &quot;source_root&quot;: &quot;c7cd4590a535240b31be649160d5313e5f9c63007c104a5b3c6b5df6b263662a&quot;
+}</pre></details><details><summary>extract · turn-0038 → turn-0038</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0038&quot;,
+  &quot;last_turn&quot;: &quot;turn-0038&quot;,
+  &quot;source_root&quot;: &quot;897680b55eae66676e1a711de91ab23b7cbd4672ee6ee306fe6f617910920c99&quot;
+}</pre></details><details><summary>digest · turn-0038 → turn-0038</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0038&quot;,
+  &quot;last_turn&quot;: &quot;turn-0038&quot;,
+  &quot;source_root&quot;: &quot;897680b55eae66676e1a711de91ab23b7cbd4672ee6ee306fe6f617910920c99&quot;
+}</pre></details><details><summary>omit · turn-0020 → turn-0021</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 2,
+  &quot;first_turn&quot;: &quot;turn-0020&quot;,
+  &quot;last_turn&quot;: &quot;turn-0021&quot;,
+  &quot;source_root&quot;: &quot;ff8a8b2f50dae11dffb42aad9ce0e67c1ad2bd872de8067d810b129d17b48812&quot;
+}</pre></details><details><summary>extract · turn-0039 → turn-0039</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0039&quot;,
+  &quot;last_turn&quot;: &quot;turn-0039&quot;,
+  &quot;source_root&quot;: &quot;e3ff7993c1e5650d786d3dc0775a5c1403f855087d3b3b96963080c26dbe395d&quot;
+}</pre></details><details><summary>digest · turn-0039 → turn-0039</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0039&quot;,
+  &quot;last_turn&quot;: &quot;turn-0039&quot;,
+  &quot;source_root&quot;: &quot;e3ff7993c1e5650d786d3dc0775a5c1403f855087d3b3b96963080c26dbe395d&quot;
+}</pre></details><details><summary>omit · turn-0022 → turn-0022</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0022&quot;,
+  &quot;last_turn&quot;: &quot;turn-0022&quot;,
+  &quot;source_root&quot;: &quot;9c02c5aeb95a6cb6b4e71aa850ce0309491522f7f5e8a9698e8c8566873dfa86&quot;
+}</pre></details><details><summary>extract · turn-0040 → turn-0040</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0040&quot;,
+  &quot;last_turn&quot;: &quot;turn-0040&quot;,
+  &quot;source_root&quot;: &quot;ac0a2b70b4032e2c43842f3ad9668a101e58c60c8b7a7cfbdc54262a426da9a1&quot;
+}</pre></details><details><summary>digest · turn-0040 → turn-0040</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0040&quot;,
+  &quot;last_turn&quot;: &quot;turn-0040&quot;,
+  &quot;source_root&quot;: &quot;ac0a2b70b4032e2c43842f3ad9668a101e58c60c8b7a7cfbdc54262a426da9a1&quot;
+}</pre></details><details><summary>omit · turn-0023 → turn-0023</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0023&quot;,
+  &quot;last_turn&quot;: &quot;turn-0023&quot;,
+  &quot;source_root&quot;: &quot;f66b6743da2169d9ee53645727f0962b8fbdb2d6c534ad9076cfc423bcae8444&quot;
+}</pre></details><details><summary>extract · turn-0041 → turn-0041</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0041&quot;,
+  &quot;last_turn&quot;: &quot;turn-0041&quot;,
+  &quot;source_root&quot;: &quot;ba8b07065740acf80636b2d9f1f1f6757066626a654cdf13cbb2dc42e2a87663&quot;
+}</pre></details><details><summary>digest · turn-0041 → turn-0041</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0041&quot;,
+  &quot;last_turn&quot;: &quot;turn-0041&quot;,
+  &quot;source_root&quot;: &quot;ba8b07065740acf80636b2d9f1f1f6757066626a654cdf13cbb2dc42e2a87663&quot;
+}</pre></details><details><summary>omit · turn-0024 → turn-0024</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0024&quot;,
+  &quot;last_turn&quot;: &quot;turn-0024&quot;,
+  &quot;source_root&quot;: &quot;3f90dfc80c76efeb6d17da644ff4b42d67e901a4569eb736034eda0f6adf057f&quot;
+}</pre></details><details><summary>extract · turn-0042 → turn-0042</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0042&quot;,
+  &quot;last_turn&quot;: &quot;turn-0042&quot;,
+  &quot;source_root&quot;: &quot;bb88c9c325da2e2f019db5095885810ac036d8474c1ba6fefba62bb5c9682f2c&quot;
+}</pre></details><details><summary>digest · turn-0042 → turn-0042</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0042&quot;,
+  &quot;last_turn&quot;: &quot;turn-0042&quot;,
+  &quot;source_root&quot;: &quot;bb88c9c325da2e2f019db5095885810ac036d8474c1ba6fefba62bb5c9682f2c&quot;
+}</pre></details><details><summary>omit · turn-0025 → turn-0025</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0025&quot;,
+  &quot;last_turn&quot;: &quot;turn-0025&quot;,
+  &quot;source_root&quot;: &quot;a27087314016f8af0ee02708886bea12ae8bd929c60e81bd3d3e8c0a062153bc&quot;
+}</pre></details><details><summary>extract · turn-0043 → turn-0043</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0043&quot;,
+  &quot;last_turn&quot;: &quot;turn-0043&quot;,
+  &quot;source_root&quot;: &quot;679684d12b00934956c343af17a9098309e631337ae40718fdd24be6921a4d54&quot;
+}</pre></details><details><summary>digest · turn-0043 → turn-0043</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0043&quot;,
+  &quot;last_turn&quot;: &quot;turn-0043&quot;,
+  &quot;source_root&quot;: &quot;679684d12b00934956c343af17a9098309e631337ae40718fdd24be6921a4d54&quot;
+}</pre></details><details><summary>omit · turn-0026 → turn-0026</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0026&quot;,
+  &quot;last_turn&quot;: &quot;turn-0026&quot;,
+  &quot;source_root&quot;: &quot;b48e55b78dddb1f1cb892b2dc6b15b691e519f246d2dba06e9482c8b10402b4b&quot;
+}</pre></details><details><summary>extract · turn-0044 → turn-0044</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0044&quot;,
+  &quot;last_turn&quot;: &quot;turn-0044&quot;,
+  &quot;source_root&quot;: &quot;8703133489e5925f05ca46bdb969dae3747fa3f637c2adc76078ff456c2979e5&quot;
+}</pre></details><details><summary>digest · turn-0044 → turn-0044</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0044&quot;,
+  &quot;last_turn&quot;: &quot;turn-0044&quot;,
+  &quot;source_root&quot;: &quot;8703133489e5925f05ca46bdb969dae3747fa3f637c2adc76078ff456c2979e5&quot;
+}</pre></details><details><summary>omit · turn-0027 → turn-0027</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0027&quot;,
+  &quot;last_turn&quot;: &quot;turn-0027&quot;,
+  &quot;source_root&quot;: &quot;b082d25f0cc271666dddc8daad5b05ecfe39fa1bd3dc41d16904312cb84666fe&quot;
+}</pre></details><details><summary>extract · turn-0045 → turn-0045</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0045&quot;,
+  &quot;last_turn&quot;: &quot;turn-0045&quot;,
+  &quot;source_root&quot;: &quot;f42e4c77b40a46fdbbb22e3bf557f7e57d4bcc77f395bf9b93290986b243a5ce&quot;
+}</pre></details><details><summary>extract · turn-0046 → turn-0046</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0046&quot;,
+  &quot;last_turn&quot;: &quot;turn-0046&quot;,
+  &quot;source_root&quot;: &quot;28e7a9b8a785bc6a71d08e9782f18797559a05a8cc73096999fce942df5c6802&quot;
+}</pre></details><details><summary>digest · turn-0045 → turn-0045</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0045&quot;,
+  &quot;last_turn&quot;: &quot;turn-0045&quot;,
+  &quot;source_root&quot;: &quot;f42e4c77b40a46fdbbb22e3bf557f7e57d4bcc77f395bf9b93290986b243a5ce&quot;
+}</pre></details><details><summary>digest · turn-0046 → turn-0046</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0046&quot;,
+  &quot;last_turn&quot;: &quot;turn-0046&quot;,
+  &quot;source_root&quot;: &quot;28e7a9b8a785bc6a71d08e9782f18797559a05a8cc73096999fce942df5c6802&quot;
+}</pre></details><details><summary>extract · turn-0047 → turn-0047</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0047&quot;,
+  &quot;last_turn&quot;: &quot;turn-0047&quot;,
+  &quot;source_root&quot;: &quot;95f00dc2d978e81451b71bc724142b2ec3232c73d88ae2f40e8ffc48f4fb875d&quot;
+}</pre></details><details><summary>digest · turn-0047 → turn-0047</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0047&quot;,
+  &quot;last_turn&quot;: &quot;turn-0047&quot;,
+  &quot;source_root&quot;: &quot;95f00dc2d978e81451b71bc724142b2ec3232c73d88ae2f40e8ffc48f4fb875d&quot;
+}</pre></details><details><summary>omit · turn-0028 → turn-0028</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0028&quot;,
+  &quot;last_turn&quot;: &quot;turn-0028&quot;,
+  &quot;source_root&quot;: &quot;0b0495e264b8e40b1b0720731c9bddeb860d3d773bb211e945bc44d08be4cfb1&quot;
+}</pre></details><details><summary>omit · turn-0029 → turn-0029</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0029&quot;,
+  &quot;last_turn&quot;: &quot;turn-0029&quot;,
+  &quot;source_root&quot;: &quot;947d83c1669ba254b01ce29d3525af71c5093355055e0081f85efa4b0b408621&quot;
+}</pre></details><details><summary>omit · turn-0030 → turn-0030</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0030&quot;,
+  &quot;last_turn&quot;: &quot;turn-0030&quot;,
+  &quot;source_root&quot;: &quot;180f79a467677456d03f1c3792b3fb1537471d059e7150a5b6e58f9f1cb53c38&quot;
+}</pre></details><details><summary>extract · turn-0048 → turn-0048</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0048&quot;,
+  &quot;last_turn&quot;: &quot;turn-0048&quot;,
+  &quot;source_root&quot;: &quot;a9c1e42aa20ec43823de348f7959cd91bc28cc902c84e318fe69013defd6b50c&quot;
+}</pre></details><details><summary>digest · turn-0048 → turn-0048</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0048&quot;,
+  &quot;last_turn&quot;: &quot;turn-0048&quot;,
+  &quot;source_root&quot;: &quot;a9c1e42aa20ec43823de348f7959cd91bc28cc902c84e318fe69013defd6b50c&quot;
+}</pre></details><details><summary>omit · turn-0031 → turn-0031</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0031&quot;,
+  &quot;last_turn&quot;: &quot;turn-0031&quot;,
+  &quot;source_root&quot;: &quot;4332d52ef18f2d0c1426fa4c089db9a5c9323c34a876730ff9e5b42f90478888&quot;
+}</pre></details><details><summary>extract · turn-0049 → turn-0049</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0049&quot;,
+  &quot;last_turn&quot;: &quot;turn-0049&quot;,
+  &quot;source_root&quot;: &quot;548d99d2846467a28ad0067c10e48bf3c094adbcaebea3414f54dee4f7a1c66a&quot;
+}</pre></details><details><summary>digest · turn-0049 → turn-0049</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0049&quot;,
+  &quot;last_turn&quot;: &quot;turn-0049&quot;,
+  &quot;source_root&quot;: &quot;548d99d2846467a28ad0067c10e48bf3c094adbcaebea3414f54dee4f7a1c66a&quot;
+}</pre></details><details><summary>omit · turn-0032 → turn-0032</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0032&quot;,
+  &quot;last_turn&quot;: &quot;turn-0032&quot;,
+  &quot;source_root&quot;: &quot;9614faabe9829cb8defdd53272674921caabbf072448a5efc9df9b43c616dbae&quot;
+}</pre></details><details><summary>extract · turn-0050 → turn-0050</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0050&quot;,
+  &quot;last_turn&quot;: &quot;turn-0050&quot;,
+  &quot;source_root&quot;: &quot;891835f08da95f0546e60d264524d09b3efcff5dee56edd0246d1890b8a28bb0&quot;
+}</pre></details><details><summary>digest · turn-0050 → turn-0050</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0050&quot;,
+  &quot;last_turn&quot;: &quot;turn-0050&quot;,
+  &quot;source_root&quot;: &quot;891835f08da95f0546e60d264524d09b3efcff5dee56edd0246d1890b8a28bb0&quot;
+}</pre></details><details><summary>omit · turn-0033 → turn-0033</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0033&quot;,
+  &quot;last_turn&quot;: &quot;turn-0033&quot;,
+  &quot;source_root&quot;: &quot;e234e3e66f8e8d42da2b761c30de619741470bda808868ff5fd7ba7866be2861&quot;
+}</pre></details><details><summary>extract · turn-0051 → turn-0051</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0051&quot;,
+  &quot;last_turn&quot;: &quot;turn-0051&quot;,
+  &quot;source_root&quot;: &quot;6b0f7fd732d8d0dfd3f33801627649fa484cf35b33d17975774b40e6e9eec8df&quot;
+}</pre></details><details><summary>digest · turn-0051 → turn-0051</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0051&quot;,
+  &quot;last_turn&quot;: &quot;turn-0051&quot;,
+  &quot;source_root&quot;: &quot;6b0f7fd732d8d0dfd3f33801627649fa484cf35b33d17975774b40e6e9eec8df&quot;
+}</pre></details><details><summary>omit · turn-0034 → turn-0034</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0034&quot;,
+  &quot;last_turn&quot;: &quot;turn-0034&quot;,
+  &quot;source_root&quot;: &quot;7691d362cf30897d2aa7de393192d79ef45f45a45c0e6e1c3bb8aac67299855e&quot;
+}</pre></details><details><summary>extract · turn-0052 → turn-0052</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0052&quot;,
+  &quot;last_turn&quot;: &quot;turn-0052&quot;,
+  &quot;source_root&quot;: &quot;4eafddf86be200704ee76cd1970c726e37a051f3914622346565486e4dd5bbcd&quot;
+}</pre></details><details><summary>digest · turn-0052 → turn-0052</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0052&quot;,
+  &quot;last_turn&quot;: &quot;turn-0052&quot;,
+  &quot;source_root&quot;: &quot;4eafddf86be200704ee76cd1970c726e37a051f3914622346565486e4dd5bbcd&quot;
+}</pre></details><details><summary>omit · turn-0035 → turn-0035</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0035&quot;,
+  &quot;last_turn&quot;: &quot;turn-0035&quot;,
+  &quot;source_root&quot;: &quot;4e203edc288a8726f17a16bc838a2565f98ebd972eecfd5135911c807f8d4df6&quot;
+}</pre></details><details><summary>extract · turn-0053 → turn-0053</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0053&quot;,
+  &quot;last_turn&quot;: &quot;turn-0053&quot;,
+  &quot;source_root&quot;: &quot;6af11c05c012669f4b493519afac0de545f5f28af3bf08f2d61c02cdc6bacc42&quot;
+}</pre></details><details><summary>digest · turn-0053 → turn-0053</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0053&quot;,
+  &quot;last_turn&quot;: &quot;turn-0053&quot;,
+  &quot;source_root&quot;: &quot;6af11c05c012669f4b493519afac0de545f5f28af3bf08f2d61c02cdc6bacc42&quot;
+}</pre></details><details><summary>omit · turn-0036 → turn-0036</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0036&quot;,
+  &quot;last_turn&quot;: &quot;turn-0036&quot;,
+  &quot;source_root&quot;: &quot;5564c5a9043c7e6edcacaf4fd9b0c54f75695486cd815319c50db8d025c99a01&quot;
+}</pre></details><details><summary>extract · turn-0054 → turn-0054</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0054&quot;,
+  &quot;last_turn&quot;: &quot;turn-0054&quot;,
+  &quot;source_root&quot;: &quot;c3561768f8ec6e7d4585eebbe97ff59b207e79aec3a21e82d7bd6bdae6d5547a&quot;
+}</pre></details><details><summary>digest · turn-0054 → turn-0054</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0054&quot;,
+  &quot;last_turn&quot;: &quot;turn-0054&quot;,
+  &quot;source_root&quot;: &quot;c3561768f8ec6e7d4585eebbe97ff59b207e79aec3a21e82d7bd6bdae6d5547a&quot;
+}</pre></details><details><summary>omit · turn-0037 → turn-0037</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0037&quot;,
+  &quot;last_turn&quot;: &quot;turn-0037&quot;,
+  &quot;source_root&quot;: &quot;a8d8818faae8d27df98292b63f0a2651d4f9450be000517530ebd3e7b4a50271&quot;
+}</pre></details><details><summary>extract · turn-0055 → turn-0055</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0055&quot;,
+  &quot;last_turn&quot;: &quot;turn-0055&quot;,
+  &quot;source_root&quot;: &quot;f684792ec15dc85d7176e8a33cd5b8706bc2d3541117b59e099b67458e6e59fa&quot;
+}</pre></details><details><summary>digest · turn-0055 → turn-0055</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0055&quot;,
+  &quot;last_turn&quot;: &quot;turn-0055&quot;,
+  &quot;source_root&quot;: &quot;f684792ec15dc85d7176e8a33cd5b8706bc2d3541117b59e099b67458e6e59fa&quot;
+}</pre></details><details><summary>omit · turn-0038 → turn-0038</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0038&quot;,
+  &quot;last_turn&quot;: &quot;turn-0038&quot;,
+  &quot;source_root&quot;: &quot;897680b55eae66676e1a711de91ab23b7cbd4672ee6ee306fe6f617910920c99&quot;
+}</pre></details><details><summary>extract · turn-0056 → turn-0056</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0056&quot;,
+  &quot;last_turn&quot;: &quot;turn-0056&quot;,
+  &quot;source_root&quot;: &quot;5fb00535d30950b855ffb15663c9e24ae7983a8ae74816ef37a5d0c3cbc37021&quot;
+}</pre></details><details><summary>digest · turn-0056 → turn-0056</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0056&quot;,
+  &quot;last_turn&quot;: &quot;turn-0056&quot;,
+  &quot;source_root&quot;: &quot;5fb00535d30950b855ffb15663c9e24ae7983a8ae74816ef37a5d0c3cbc37021&quot;
+}</pre></details><details><summary>omit · turn-0039 → turn-0039</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0039&quot;,
+  &quot;last_turn&quot;: &quot;turn-0039&quot;,
+  &quot;source_root&quot;: &quot;e3ff7993c1e5650d786d3dc0775a5c1403f855087d3b3b96963080c26dbe395d&quot;
+}</pre></details><details><summary>extract · turn-0057 → turn-0057</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0057&quot;,
+  &quot;last_turn&quot;: &quot;turn-0057&quot;,
+  &quot;source_root&quot;: &quot;7b44daecff653759e84a86746ed146617fd7e92ed7534b3cf81d4ac87b2d501f&quot;
+}</pre></details><details><summary>digest · turn-0057 → turn-0057</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0057&quot;,
+  &quot;last_turn&quot;: &quot;turn-0057&quot;,
+  &quot;source_root&quot;: &quot;7b44daecff653759e84a86746ed146617fd7e92ed7534b3cf81d4ac87b2d501f&quot;
+}</pre></details><details><summary>omit · turn-0040 → turn-0040</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0040&quot;,
+  &quot;last_turn&quot;: &quot;turn-0040&quot;,
+  &quot;source_root&quot;: &quot;ac0a2b70b4032e2c43842f3ad9668a101e58c60c8b7a7cfbdc54262a426da9a1&quot;
+}</pre></details><details><summary>extract · turn-0058 → turn-0058</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0058&quot;,
+  &quot;last_turn&quot;: &quot;turn-0058&quot;,
+  &quot;source_root&quot;: &quot;b1b3cb032f4995062327ae08589e34c976809912a4adfd4e155923ac1b0fc138&quot;
+}</pre></details><details><summary>digest · turn-0058 → turn-0058</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0058&quot;,
+  &quot;last_turn&quot;: &quot;turn-0058&quot;,
+  &quot;source_root&quot;: &quot;b1b3cb032f4995062327ae08589e34c976809912a4adfd4e155923ac1b0fc138&quot;
+}</pre></details><details><summary>omit · turn-0041 → turn-0041</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0041&quot;,
+  &quot;last_turn&quot;: &quot;turn-0041&quot;,
+  &quot;source_root&quot;: &quot;ba8b07065740acf80636b2d9f1f1f6757066626a654cdf13cbb2dc42e2a87663&quot;
+}</pre></details><details><summary>extract · turn-0059 → turn-0059</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0059&quot;,
+  &quot;last_turn&quot;: &quot;turn-0059&quot;,
+  &quot;source_root&quot;: &quot;10bd3d8ed10edf80c3cb6383f17f53b6277390dd2078bb8df096a24251b8d1fb&quot;
+}</pre></details><details><summary>digest · turn-0059 → turn-0059</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0059&quot;,
+  &quot;last_turn&quot;: &quot;turn-0059&quot;,
+  &quot;source_root&quot;: &quot;10bd3d8ed10edf80c3cb6383f17f53b6277390dd2078bb8df096a24251b8d1fb&quot;
+}</pre></details><details><summary>omit · turn-0042 → turn-0042</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0042&quot;,
+  &quot;last_turn&quot;: &quot;turn-0042&quot;,
+  &quot;source_root&quot;: &quot;bb88c9c325da2e2f019db5095885810ac036d8474c1ba6fefba62bb5c9682f2c&quot;
+}</pre></details><details><summary>extract · turn-0060 → turn-0060</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0060&quot;,
+  &quot;last_turn&quot;: &quot;turn-0060&quot;,
+  &quot;source_root&quot;: &quot;e4d0acc12dce68282393f300fd12c80eae85c6248b5ca5b0cd61e1f564321288&quot;
+}</pre></details><details><summary>digest · turn-0060 → turn-0060</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0060&quot;,
+  &quot;last_turn&quot;: &quot;turn-0060&quot;,
+  &quot;source_root&quot;: &quot;e4d0acc12dce68282393f300fd12c80eae85c6248b5ca5b0cd61e1f564321288&quot;
+}</pre></details><details><summary>omit · turn-0043 → turn-0043</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0043&quot;,
+  &quot;last_turn&quot;: &quot;turn-0043&quot;,
+  &quot;source_root&quot;: &quot;679684d12b00934956c343af17a9098309e631337ae40718fdd24be6921a4d54&quot;
+}</pre></details><details><summary>extract · turn-0061 → turn-0061</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0061&quot;,
+  &quot;last_turn&quot;: &quot;turn-0061&quot;,
+  &quot;source_root&quot;: &quot;4de5be698f27efe12bdaa772b3e8c481b8f0cd5815bd6c8c2f4587534e638cdf&quot;
+}</pre></details><details><summary>digest · turn-0061 → turn-0061</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0061&quot;,
+  &quot;last_turn&quot;: &quot;turn-0061&quot;,
+  &quot;source_root&quot;: &quot;4de5be698f27efe12bdaa772b3e8c481b8f0cd5815bd6c8c2f4587534e638cdf&quot;
+}</pre></details><details><summary>omit · turn-0044 → turn-0044</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0044&quot;,
+  &quot;last_turn&quot;: &quot;turn-0044&quot;,
+  &quot;source_root&quot;: &quot;8703133489e5925f05ca46bdb969dae3747fa3f637c2adc76078ff456c2979e5&quot;
+}</pre></details><details><summary>extract · turn-0062 → turn-0062</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0062&quot;,
+  &quot;last_turn&quot;: &quot;turn-0062&quot;,
+  &quot;source_root&quot;: &quot;07a9b077c17f77bec4cd522e9c4d72b81a83076a8224526b85508e6cbd2fe3fb&quot;
+}</pre></details><details><summary>digest · turn-0062 → turn-0062</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0062&quot;,
+  &quot;last_turn&quot;: &quot;turn-0062&quot;,
+  &quot;source_root&quot;: &quot;07a9b077c17f77bec4cd522e9c4d72b81a83076a8224526b85508e6cbd2fe3fb&quot;
+}</pre></details><details><summary>omit · turn-0045 → turn-0045</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0045&quot;,
+  &quot;last_turn&quot;: &quot;turn-0045&quot;,
+  &quot;source_root&quot;: &quot;f42e4c77b40a46fdbbb22e3bf557f7e57d4bcc77f395bf9b93290986b243a5ce&quot;
+}</pre></details><details><summary>extract · turn-0063 → turn-0063</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0063&quot;,
+  &quot;last_turn&quot;: &quot;turn-0063&quot;,
+  &quot;source_root&quot;: &quot;9e3695d3215bc2fe4f3f5ecfe19604f7ca801f2e5c61479473dcda2ef85f7a69&quot;
+}</pre></details><details><summary>digest · turn-0063 → turn-0063</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0063&quot;,
+  &quot;last_turn&quot;: &quot;turn-0063&quot;,
+  &quot;source_root&quot;: &quot;9e3695d3215bc2fe4f3f5ecfe19604f7ca801f2e5c61479473dcda2ef85f7a69&quot;
+}</pre></details><details><summary>omit · turn-0046 → turn-0046</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0046&quot;,
+  &quot;last_turn&quot;: &quot;turn-0046&quot;,
+  &quot;source_root&quot;: &quot;28e7a9b8a785bc6a71d08e9782f18797559a05a8cc73096999fce942df5c6802&quot;
+}</pre></details><details><summary>extract · turn-0064 → turn-0064</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0064&quot;,
+  &quot;last_turn&quot;: &quot;turn-0064&quot;,
+  &quot;source_root&quot;: &quot;2095d0e230d767c7af890b45cb9765a6a2bff52b6536402afbce207e788d43be&quot;
+}</pre></details><details><summary>digest · turn-0064 → turn-0064</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0064&quot;,
+  &quot;last_turn&quot;: &quot;turn-0064&quot;,
+  &quot;source_root&quot;: &quot;2095d0e230d767c7af890b45cb9765a6a2bff52b6536402afbce207e788d43be&quot;
+}</pre></details><details><summary>omit · turn-0047 → turn-0047</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0047&quot;,
+  &quot;last_turn&quot;: &quot;turn-0047&quot;,
+  &quot;source_root&quot;: &quot;95f00dc2d978e81451b71bc724142b2ec3232c73d88ae2f40e8ffc48f4fb875d&quot;
+}</pre></details><details><summary>extract · turn-0065 → turn-0065</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0065&quot;,
+  &quot;last_turn&quot;: &quot;turn-0065&quot;,
+  &quot;source_root&quot;: &quot;56662d9193f67adc72633d25c1239f9c0dfe137813a13ed919208ffb9ba9b3a6&quot;
+}</pre></details><details><summary>digest · turn-0065 → turn-0065</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0065&quot;,
+  &quot;last_turn&quot;: &quot;turn-0065&quot;,
+  &quot;source_root&quot;: &quot;56662d9193f67adc72633d25c1239f9c0dfe137813a13ed919208ffb9ba9b3a6&quot;
+}</pre></details><details><summary>omit · turn-0048 → turn-0048</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0048&quot;,
+  &quot;last_turn&quot;: &quot;turn-0048&quot;,
+  &quot;source_root&quot;: &quot;a9c1e42aa20ec43823de348f7959cd91bc28cc902c84e318fe69013defd6b50c&quot;
+}</pre></details><details><summary>extract · turn-0066 → turn-0066</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0066&quot;,
+  &quot;last_turn&quot;: &quot;turn-0066&quot;,
+  &quot;source_root&quot;: &quot;2133a7655bcb1a2db0eb51b3ff939d80bb59f47068b2b08087dfb6d100a0cb81&quot;
+}</pre></details><details><summary>digest · turn-0066 → turn-0066</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0066&quot;,
+  &quot;last_turn&quot;: &quot;turn-0066&quot;,
+  &quot;source_root&quot;: &quot;2133a7655bcb1a2db0eb51b3ff939d80bb59f47068b2b08087dfb6d100a0cb81&quot;
+}</pre></details><details><summary>omit · turn-0049 → turn-0049</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0049&quot;,
+  &quot;last_turn&quot;: &quot;turn-0049&quot;,
+  &quot;source_root&quot;: &quot;548d99d2846467a28ad0067c10e48bf3c094adbcaebea3414f54dee4f7a1c66a&quot;
+}</pre></details><details><summary>extract · turn-0067 → turn-0067</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0067&quot;,
+  &quot;last_turn&quot;: &quot;turn-0067&quot;,
+  &quot;source_root&quot;: &quot;162d926a606ede8d35b896f07730b64e6bab96c078097ebc1d660130df40a3bd&quot;
+}</pre></details><details><summary>digest · turn-0067 → turn-0067</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0067&quot;,
+  &quot;last_turn&quot;: &quot;turn-0067&quot;,
+  &quot;source_root&quot;: &quot;162d926a606ede8d35b896f07730b64e6bab96c078097ebc1d660130df40a3bd&quot;
+}</pre></details><details><summary>omit · turn-0050 → turn-0050</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0050&quot;,
+  &quot;last_turn&quot;: &quot;turn-0050&quot;,
+  &quot;source_root&quot;: &quot;891835f08da95f0546e60d264524d09b3efcff5dee56edd0246d1890b8a28bb0&quot;
+}</pre></details><details><summary>extract · turn-0068 → turn-0068</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0068&quot;,
+  &quot;last_turn&quot;: &quot;turn-0068&quot;,
+  &quot;source_root&quot;: &quot;b46da64fe9c162e022a9a5fb0d328274fb69f11fa7fe6222183b04a7debf0cf8&quot;
+}</pre></details><details><summary>digest · turn-0068 → turn-0068</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0068&quot;,
+  &quot;last_turn&quot;: &quot;turn-0068&quot;,
+  &quot;source_root&quot;: &quot;b46da64fe9c162e022a9a5fb0d328274fb69f11fa7fe6222183b04a7debf0cf8&quot;
+}</pre></details><details><summary>omit · turn-0051 → turn-0051</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0051&quot;,
+  &quot;last_turn&quot;: &quot;turn-0051&quot;,
+  &quot;source_root&quot;: &quot;6b0f7fd732d8d0dfd3f33801627649fa484cf35b33d17975774b40e6e9eec8df&quot;
+}</pre></details><details><summary>extract · turn-0069 → turn-0069</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0069&quot;,
+  &quot;last_turn&quot;: &quot;turn-0069&quot;,
+  &quot;source_root&quot;: &quot;7979378208f65593989b02f75a5df89ab05b37019345b652a38daefb2d684658&quot;
+}</pre></details><details><summary>digest · turn-0069 → turn-0069</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0069&quot;,
+  &quot;last_turn&quot;: &quot;turn-0069&quot;,
+  &quot;source_root&quot;: &quot;7979378208f65593989b02f75a5df89ab05b37019345b652a38daefb2d684658&quot;
+}</pre></details><details><summary>omit · turn-0052 → turn-0052</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0052&quot;,
+  &quot;last_turn&quot;: &quot;turn-0052&quot;,
+  &quot;source_root&quot;: &quot;4eafddf86be200704ee76cd1970c726e37a051f3914622346565486e4dd5bbcd&quot;
+}</pre></details><details><summary>extract · turn-0070 → turn-0070</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0070&quot;,
+  &quot;last_turn&quot;: &quot;turn-0070&quot;,
+  &quot;source_root&quot;: &quot;4d8edf325578701933fca65715b9f9c5a217bc7540d41d018e3830fef748f11b&quot;
+}</pre></details><details><summary>digest · turn-0070 → turn-0070</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0070&quot;,
+  &quot;last_turn&quot;: &quot;turn-0070&quot;,
+  &quot;source_root&quot;: &quot;4d8edf325578701933fca65715b9f9c5a217bc7540d41d018e3830fef748f11b&quot;
+}</pre></details><details><summary>omit · turn-0053 → turn-0053</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0053&quot;,
+  &quot;last_turn&quot;: &quot;turn-0053&quot;,
+  &quot;source_root&quot;: &quot;6af11c05c012669f4b493519afac0de545f5f28af3bf08f2d61c02cdc6bacc42&quot;
+}</pre></details><details><summary>extract · turn-0071 → turn-0071</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0071&quot;,
+  &quot;last_turn&quot;: &quot;turn-0071&quot;,
+  &quot;source_root&quot;: &quot;6f6dc49242690335b440f9021208211388cda2c525046209a6adccb9c4e2b65c&quot;
+}</pre></details><details><summary>digest · turn-0071 → turn-0071</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0071&quot;,
+  &quot;last_turn&quot;: &quot;turn-0071&quot;,
+  &quot;source_root&quot;: &quot;6f6dc49242690335b440f9021208211388cda2c525046209a6adccb9c4e2b65c&quot;
+}</pre></details><details><summary>omit · turn-0054 → turn-0054</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0054&quot;,
+  &quot;last_turn&quot;: &quot;turn-0054&quot;,
+  &quot;source_root&quot;: &quot;c3561768f8ec6e7d4585eebbe97ff59b207e79aec3a21e82d7bd6bdae6d5547a&quot;
+}</pre></details><details><summary>extract · turn-0072 → turn-0072</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0072&quot;,
+  &quot;last_turn&quot;: &quot;turn-0072&quot;,
+  &quot;source_root&quot;: &quot;8f2fe7cfc94767c8e37154683ece6f7e550404e0ce61aca5973e8166ef68f184&quot;
+}</pre></details><details><summary>digest · turn-0072 → turn-0072</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0072&quot;,
+  &quot;last_turn&quot;: &quot;turn-0072&quot;,
+  &quot;source_root&quot;: &quot;8f2fe7cfc94767c8e37154683ece6f7e550404e0ce61aca5973e8166ef68f184&quot;
+}</pre></details><details><summary>omit · turn-0055 → turn-0055</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0055&quot;,
+  &quot;last_turn&quot;: &quot;turn-0055&quot;,
+  &quot;source_root&quot;: &quot;f684792ec15dc85d7176e8a33cd5b8706bc2d3541117b59e099b67458e6e59fa&quot;
+}</pre></details><details><summary>extract · turn-0073 → turn-0073</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0073&quot;,
+  &quot;last_turn&quot;: &quot;turn-0073&quot;,
+  &quot;source_root&quot;: &quot;a8d377953f3edd609d1f0c3849700a0b51df19e49dd296f6568ced5c3361f807&quot;
+}</pre></details><details><summary>digest · turn-0073 → turn-0073</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0073&quot;,
+  &quot;last_turn&quot;: &quot;turn-0073&quot;,
+  &quot;source_root&quot;: &quot;a8d377953f3edd609d1f0c3849700a0b51df19e49dd296f6568ced5c3361f807&quot;
+}</pre></details><details><summary>omit · turn-0056 → turn-0056</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0056&quot;,
+  &quot;last_turn&quot;: &quot;turn-0056&quot;,
+  &quot;source_root&quot;: &quot;5fb00535d30950b855ffb15663c9e24ae7983a8ae74816ef37a5d0c3cbc37021&quot;
+}</pre></details><details><summary>extract · turn-0074 → turn-0074</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0074&quot;,
+  &quot;last_turn&quot;: &quot;turn-0074&quot;,
+  &quot;source_root&quot;: &quot;89c5ebeff470c22299408b1b56a0345f63c3e5b6c894cf4ee7ea301a2a64b5a0&quot;
+}</pre></details><details><summary>digest · turn-0074 → turn-0074</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0074&quot;,
+  &quot;last_turn&quot;: &quot;turn-0074&quot;,
+  &quot;source_root&quot;: &quot;89c5ebeff470c22299408b1b56a0345f63c3e5b6c894cf4ee7ea301a2a64b5a0&quot;
+}</pre></details><details><summary>omit · turn-0057 → turn-0057</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0057&quot;,
+  &quot;last_turn&quot;: &quot;turn-0057&quot;,
+  &quot;source_root&quot;: &quot;7b44daecff653759e84a86746ed146617fd7e92ed7534b3cf81d4ac87b2d501f&quot;
+}</pre></details><details><summary>extract · turn-0075 → turn-0075</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0075&quot;,
+  &quot;last_turn&quot;: &quot;turn-0075&quot;,
+  &quot;source_root&quot;: &quot;200b31cac3a14491a7fb3627b91a9e2dbca87b9f3365d777445b37ce30b2128f&quot;
+}</pre></details><details><summary>digest · turn-0075 → turn-0075</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0075&quot;,
+  &quot;last_turn&quot;: &quot;turn-0075&quot;,
+  &quot;source_root&quot;: &quot;200b31cac3a14491a7fb3627b91a9e2dbca87b9f3365d777445b37ce30b2128f&quot;
+}</pre></details><details><summary>omit · turn-0058 → turn-0058</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0058&quot;,
+  &quot;last_turn&quot;: &quot;turn-0058&quot;,
+  &quot;source_root&quot;: &quot;b1b3cb032f4995062327ae08589e34c976809912a4adfd4e155923ac1b0fc138&quot;
+}</pre></details><details><summary>extract · turn-0076 → turn-0076</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0076&quot;,
+  &quot;last_turn&quot;: &quot;turn-0076&quot;,
+  &quot;source_root&quot;: &quot;bc4572ab9ee73b7e9a1a5c4e1f51ae164fdc8730566b512462a4d831e1c01cef&quot;
+}</pre></details><details><summary>digest · turn-0076 → turn-0076</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0076&quot;,
+  &quot;last_turn&quot;: &quot;turn-0076&quot;,
+  &quot;source_root&quot;: &quot;bc4572ab9ee73b7e9a1a5c4e1f51ae164fdc8730566b512462a4d831e1c01cef&quot;
+}</pre></details><details><summary>omit · turn-0059 → turn-0059</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0059&quot;,
+  &quot;last_turn&quot;: &quot;turn-0059&quot;,
+  &quot;source_root&quot;: &quot;10bd3d8ed10edf80c3cb6383f17f53b6277390dd2078bb8df096a24251b8d1fb&quot;
+}</pre></details><details><summary>extract · turn-0077 → turn-0077</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0077&quot;,
+  &quot;last_turn&quot;: &quot;turn-0077&quot;,
+  &quot;source_root&quot;: &quot;13cf066be28de3508a45d92e559107f3b07d758531d1f9fd9c4d442a0bbfb10b&quot;
+}</pre></details><details><summary>digest · turn-0077 → turn-0077</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0077&quot;,
+  &quot;last_turn&quot;: &quot;turn-0077&quot;,
+  &quot;source_root&quot;: &quot;13cf066be28de3508a45d92e559107f3b07d758531d1f9fd9c4d442a0bbfb10b&quot;
+}</pre></details><details><summary>omit · turn-0060 → turn-0060</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0060&quot;,
+  &quot;last_turn&quot;: &quot;turn-0060&quot;,
+  &quot;source_root&quot;: &quot;e4d0acc12dce68282393f300fd12c80eae85c6248b5ca5b0cd61e1f564321288&quot;
+}</pre></details><details><summary>extract · turn-0078 → turn-0078</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0078&quot;,
+  &quot;last_turn&quot;: &quot;turn-0078&quot;,
+  &quot;source_root&quot;: &quot;19a7b19048cbc1d4c8f139e95614dd1d2e2358457bf25270cef26a619039059a&quot;
+}</pre></details><details><summary>digest · turn-0078 → turn-0078</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0078&quot;,
+  &quot;last_turn&quot;: &quot;turn-0078&quot;,
+  &quot;source_root&quot;: &quot;19a7b19048cbc1d4c8f139e95614dd1d2e2358457bf25270cef26a619039059a&quot;
+}</pre></details><details><summary>omit · turn-0061 → turn-0061</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0061&quot;,
+  &quot;last_turn&quot;: &quot;turn-0061&quot;,
+  &quot;source_root&quot;: &quot;4de5be698f27efe12bdaa772b3e8c481b8f0cd5815bd6c8c2f4587534e638cdf&quot;
+}</pre></details><details><summary>extract · turn-0079 → turn-0079</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0079&quot;,
+  &quot;last_turn&quot;: &quot;turn-0079&quot;,
+  &quot;source_root&quot;: &quot;2dd2f4cb1df7587fd1b22332a0e25b4b1e4495fb72b8416b6cc40174ab6131db&quot;
+}</pre></details><details><summary>digest · turn-0079 → turn-0079</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0079&quot;,
+  &quot;last_turn&quot;: &quot;turn-0079&quot;,
+  &quot;source_root&quot;: &quot;2dd2f4cb1df7587fd1b22332a0e25b4b1e4495fb72b8416b6cc40174ab6131db&quot;
+}</pre></details><details><summary>omit · turn-0062 → turn-0062</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0062&quot;,
+  &quot;last_turn&quot;: &quot;turn-0062&quot;,
+  &quot;source_root&quot;: &quot;07a9b077c17f77bec4cd522e9c4d72b81a83076a8224526b85508e6cbd2fe3fb&quot;
+}</pre></details><details><summary>extract · turn-0080 → turn-0080</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0080&quot;,
+  &quot;last_turn&quot;: &quot;turn-0080&quot;,
+  &quot;source_root&quot;: &quot;ebdf8d40e3eb3eaa88fa503a69fad110f85f3971a389a3d381ab16d29d8c0407&quot;
+}</pre></details><details><summary>digest · turn-0080 → turn-0080</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0080&quot;,
+  &quot;last_turn&quot;: &quot;turn-0080&quot;,
+  &quot;source_root&quot;: &quot;ebdf8d40e3eb3eaa88fa503a69fad110f85f3971a389a3d381ab16d29d8c0407&quot;
+}</pre></details><details><summary>extract · turn-0081 → turn-0081</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0081&quot;,
+  &quot;last_turn&quot;: &quot;turn-0081&quot;,
+  &quot;source_root&quot;: &quot;52b0e4d65dd27ffcc0eff074570af72d56bafd49fa669c5886b025037cfcb356&quot;
+}</pre></details><details><summary>digest · turn-0081 → turn-0081</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0081&quot;,
+  &quot;last_turn&quot;: &quot;turn-0081&quot;,
+  &quot;source_root&quot;: &quot;52b0e4d65dd27ffcc0eff074570af72d56bafd49fa669c5886b025037cfcb356&quot;
+}</pre></details><details><summary>extract · turn-0082 → turn-0082</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0082&quot;,
+  &quot;last_turn&quot;: &quot;turn-0082&quot;,
+  &quot;source_root&quot;: &quot;27cdb19ade634614d1009e326bb6c90e762f5251d1f53e7f29d8a1a63e25c7a3&quot;
+}</pre></details><details><summary>digest · turn-0082 → turn-0082</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0082&quot;,
+  &quot;last_turn&quot;: &quot;turn-0082&quot;,
+  &quot;source_root&quot;: &quot;27cdb19ade634614d1009e326bb6c90e762f5251d1f53e7f29d8a1a63e25c7a3&quot;
+}</pre></details><details><summary>omit · turn-0063 → turn-0063</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0063&quot;,
+  &quot;last_turn&quot;: &quot;turn-0063&quot;,
+  &quot;source_root&quot;: &quot;9e3695d3215bc2fe4f3f5ecfe19604f7ca801f2e5c61479473dcda2ef85f7a69&quot;
+}</pre></details><details><summary>omit · turn-0064 → turn-0064</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0064&quot;,
+  &quot;last_turn&quot;: &quot;turn-0064&quot;,
+  &quot;source_root&quot;: &quot;2095d0e230d767c7af890b45cb9765a6a2bff52b6536402afbce207e788d43be&quot;
+}</pre></details><details><summary>omit · turn-0065 → turn-0065</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0065&quot;,
+  &quot;last_turn&quot;: &quot;turn-0065&quot;,
+  &quot;source_root&quot;: &quot;56662d9193f67adc72633d25c1239f9c0dfe137813a13ed919208ffb9ba9b3a6&quot;
+}</pre></details><details><summary>extract · turn-0083 → turn-0083</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0083&quot;,
+  &quot;last_turn&quot;: &quot;turn-0083&quot;,
+  &quot;source_root&quot;: &quot;db9cbbf80fb9938fd269f15fc885a76d5905a38ed3408857b4f66fa68390552d&quot;
+}</pre></details><details><summary>digest · turn-0083 → turn-0083</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0083&quot;,
+  &quot;last_turn&quot;: &quot;turn-0083&quot;,
+  &quot;source_root&quot;: &quot;db9cbbf80fb9938fd269f15fc885a76d5905a38ed3408857b4f66fa68390552d&quot;
+}</pre></details><details><summary>omit · turn-0066 → turn-0066</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0066&quot;,
+  &quot;last_turn&quot;: &quot;turn-0066&quot;,
+  &quot;source_root&quot;: &quot;2133a7655bcb1a2db0eb51b3ff939d80bb59f47068b2b08087dfb6d100a0cb81&quot;
+}</pre></details><details><summary>extract · turn-0084 → turn-0084</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0084&quot;,
+  &quot;last_turn&quot;: &quot;turn-0084&quot;,
+  &quot;source_root&quot;: &quot;d398056d5f5eb474a899be89acc13331edf12e468193e3b20d4848b2d2968c4d&quot;
+}</pre></details><details><summary>digest · turn-0084 → turn-0084</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0084&quot;,
+  &quot;last_turn&quot;: &quot;turn-0084&quot;,
+  &quot;source_root&quot;: &quot;d398056d5f5eb474a899be89acc13331edf12e468193e3b20d4848b2d2968c4d&quot;
+}</pre></details><details><summary>omit · turn-0067 → turn-0067</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0067&quot;,
+  &quot;last_turn&quot;: &quot;turn-0067&quot;,
+  &quot;source_root&quot;: &quot;162d926a606ede8d35b896f07730b64e6bab96c078097ebc1d660130df40a3bd&quot;
+}</pre></details><details><summary>extract · turn-0085 → turn-0085</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0085&quot;,
+  &quot;last_turn&quot;: &quot;turn-0085&quot;,
+  &quot;source_root&quot;: &quot;1c54b964da9e34cf4135f6f84b60be53f17be3127e6ef0c0f14fcf9791c2e456&quot;
+}</pre></details><details><summary>digest · turn-0085 → turn-0085</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0085&quot;,
+  &quot;last_turn&quot;: &quot;turn-0085&quot;,
+  &quot;source_root&quot;: &quot;1c54b964da9e34cf4135f6f84b60be53f17be3127e6ef0c0f14fcf9791c2e456&quot;
+}</pre></details><details><summary>omit · turn-0068 → turn-0068</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0068&quot;,
+  &quot;last_turn&quot;: &quot;turn-0068&quot;,
+  &quot;source_root&quot;: &quot;b46da64fe9c162e022a9a5fb0d328274fb69f11fa7fe6222183b04a7debf0cf8&quot;
+}</pre></details><details><summary>extract · turn-0086 → turn-0086</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0086&quot;,
+  &quot;last_turn&quot;: &quot;turn-0086&quot;,
+  &quot;source_root&quot;: &quot;3a53022810b3c0a553e7bb668caa73ab3cd164aacb027dbfc437c74a7199a550&quot;
+}</pre></details><details><summary>digest · turn-0086 → turn-0086</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0086&quot;,
+  &quot;last_turn&quot;: &quot;turn-0086&quot;,
+  &quot;source_root&quot;: &quot;3a53022810b3c0a553e7bb668caa73ab3cd164aacb027dbfc437c74a7199a550&quot;
+}</pre></details><details><summary>omit · turn-0069 → turn-0069</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0069&quot;,
+  &quot;last_turn&quot;: &quot;turn-0069&quot;,
+  &quot;source_root&quot;: &quot;7979378208f65593989b02f75a5df89ab05b37019345b652a38daefb2d684658&quot;
+}</pre></details><details><summary>extract · turn-0087 → turn-0087</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0087&quot;,
+  &quot;last_turn&quot;: &quot;turn-0087&quot;,
+  &quot;source_root&quot;: &quot;acfe48548e241ea711a38734e3f69b0899aebd0be361605e03576a8fe2e8eb3f&quot;
+}</pre></details><details><summary>digest · turn-0087 → turn-0087</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0087&quot;,
+  &quot;last_turn&quot;: &quot;turn-0087&quot;,
+  &quot;source_root&quot;: &quot;acfe48548e241ea711a38734e3f69b0899aebd0be361605e03576a8fe2e8eb3f&quot;
+}</pre></details><details><summary>omit · turn-0070 → turn-0070</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0070&quot;,
+  &quot;last_turn&quot;: &quot;turn-0070&quot;,
+  &quot;source_root&quot;: &quot;4d8edf325578701933fca65715b9f9c5a217bc7540d41d018e3830fef748f11b&quot;
+}</pre></details><details><summary>extract · turn-0088 → turn-0088</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0088&quot;,
+  &quot;last_turn&quot;: &quot;turn-0088&quot;,
+  &quot;source_root&quot;: &quot;4a043291e91861e6d209cacf9232cff79bfc3ca9155125362b277a5241557b2e&quot;
+}</pre></details><details><summary>digest · turn-0088 → turn-0088</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0088&quot;,
+  &quot;last_turn&quot;: &quot;turn-0088&quot;,
+  &quot;source_root&quot;: &quot;4a043291e91861e6d209cacf9232cff79bfc3ca9155125362b277a5241557b2e&quot;
+}</pre></details><details><summary>omit · turn-0071 → turn-0071</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0071&quot;,
+  &quot;last_turn&quot;: &quot;turn-0071&quot;,
+  &quot;source_root&quot;: &quot;6f6dc49242690335b440f9021208211388cda2c525046209a6adccb9c4e2b65c&quot;
+}</pre></details><details><summary>extract · turn-0089 → turn-0089</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0089&quot;,
+  &quot;last_turn&quot;: &quot;turn-0089&quot;,
+  &quot;source_root&quot;: &quot;96cf7a7437d7df3bbe27b102038ab26ee88df8fabe1a09e2032930a049b41bb7&quot;
+}</pre></details><details><summary>digest · turn-0089 → turn-0089</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0089&quot;,
+  &quot;last_turn&quot;: &quot;turn-0089&quot;,
+  &quot;source_root&quot;: &quot;96cf7a7437d7df3bbe27b102038ab26ee88df8fabe1a09e2032930a049b41bb7&quot;
+}</pre></details><details><summary>omit · turn-0072 → turn-0072</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0072&quot;,
+  &quot;last_turn&quot;: &quot;turn-0072&quot;,
+  &quot;source_root&quot;: &quot;8f2fe7cfc94767c8e37154683ece6f7e550404e0ce61aca5973e8166ef68f184&quot;
+}</pre></details><details><summary>extract · turn-0090 → turn-0090</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0090&quot;,
+  &quot;last_turn&quot;: &quot;turn-0090&quot;,
+  &quot;source_root&quot;: &quot;a19dadf5712140a627d24a137217e992eb0513d994aa07cc30dfa0d18018e601&quot;
+}</pre></details><details><summary>digest · turn-0090 → turn-0090</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0090&quot;,
+  &quot;last_turn&quot;: &quot;turn-0090&quot;,
+  &quot;source_root&quot;: &quot;a19dadf5712140a627d24a137217e992eb0513d994aa07cc30dfa0d18018e601&quot;
+}</pre></details><details><summary>omit · turn-0073 → turn-0073</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0073&quot;,
+  &quot;last_turn&quot;: &quot;turn-0073&quot;,
+  &quot;source_root&quot;: &quot;a8d377953f3edd609d1f0c3849700a0b51df19e49dd296f6568ced5c3361f807&quot;
+}</pre></details><details><summary>extract · turn-0091 → turn-0091</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0091&quot;,
+  &quot;last_turn&quot;: &quot;turn-0091&quot;,
+  &quot;source_root&quot;: &quot;5bbddf79e77f57a67c46bd293bd7592ad25c71fc7a463de1da7bd906875c3346&quot;
+}</pre></details><details><summary>digest · turn-0091 → turn-0091</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0091&quot;,
+  &quot;last_turn&quot;: &quot;turn-0091&quot;,
+  &quot;source_root&quot;: &quot;5bbddf79e77f57a67c46bd293bd7592ad25c71fc7a463de1da7bd906875c3346&quot;
+}</pre></details><details><summary>omit · turn-0074 → turn-0074</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0074&quot;,
+  &quot;last_turn&quot;: &quot;turn-0074&quot;,
+  &quot;source_root&quot;: &quot;89c5ebeff470c22299408b1b56a0345f63c3e5b6c894cf4ee7ea301a2a64b5a0&quot;
+}</pre></details><details><summary>extract · turn-0092 → turn-0092</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0092&quot;,
+  &quot;last_turn&quot;: &quot;turn-0092&quot;,
+  &quot;source_root&quot;: &quot;62582bb7801fb6b1bb2a92ff307824286e1b364b5ffdbe7138e8f5a21a7a98d7&quot;
+}</pre></details><details><summary>digest · turn-0092 → turn-0092</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0092&quot;,
+  &quot;last_turn&quot;: &quot;turn-0092&quot;,
+  &quot;source_root&quot;: &quot;62582bb7801fb6b1bb2a92ff307824286e1b364b5ffdbe7138e8f5a21a7a98d7&quot;
+}</pre></details><details><summary>omit · turn-0075 → turn-0075</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0075&quot;,
+  &quot;last_turn&quot;: &quot;turn-0075&quot;,
+  &quot;source_root&quot;: &quot;200b31cac3a14491a7fb3627b91a9e2dbca87b9f3365d777445b37ce30b2128f&quot;
+}</pre></details><details><summary>extract · turn-0093 → turn-0093</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0093&quot;,
+  &quot;last_turn&quot;: &quot;turn-0093&quot;,
+  &quot;source_root&quot;: &quot;8bb01ddecacb7b79863f0c74acedec65fb9ed25f5459220f87ba1dc4caa565a1&quot;
+}</pre></details><details><summary>digest · turn-0093 → turn-0093</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0093&quot;,
+  &quot;last_turn&quot;: &quot;turn-0093&quot;,
+  &quot;source_root&quot;: &quot;8bb01ddecacb7b79863f0c74acedec65fb9ed25f5459220f87ba1dc4caa565a1&quot;
+}</pre></details><details><summary>omit · turn-0076 → turn-0076</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0076&quot;,
+  &quot;last_turn&quot;: &quot;turn-0076&quot;,
+  &quot;source_root&quot;: &quot;bc4572ab9ee73b7e9a1a5c4e1f51ae164fdc8730566b512462a4d831e1c01cef&quot;
+}</pre></details><details><summary>extract · turn-0094 → turn-0094</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0094&quot;,
+  &quot;last_turn&quot;: &quot;turn-0094&quot;,
+  &quot;source_root&quot;: &quot;eab0ea10fdcd7510863183f45a29a0ce0b289303efaf699b1e8e2aba01bddfdd&quot;
+}</pre></details><details><summary>digest · turn-0094 → turn-0094</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0094&quot;,
+  &quot;last_turn&quot;: &quot;turn-0094&quot;,
+  &quot;source_root&quot;: &quot;eab0ea10fdcd7510863183f45a29a0ce0b289303efaf699b1e8e2aba01bddfdd&quot;
+}</pre></details><details><summary>omit · turn-0077 → turn-0077</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0077&quot;,
+  &quot;last_turn&quot;: &quot;turn-0077&quot;,
+  &quot;source_root&quot;: &quot;13cf066be28de3508a45d92e559107f3b07d758531d1f9fd9c4d442a0bbfb10b&quot;
+}</pre></details><details><summary>extract · turn-0095 → turn-0095</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0095&quot;,
+  &quot;last_turn&quot;: &quot;turn-0095&quot;,
+  &quot;source_root&quot;: &quot;0706e661923fdd79ab1017b39f45c2ab3b243e28a7b2e90ad9ec06b5c732b5c9&quot;
+}</pre></details><details><summary>digest · turn-0095 → turn-0095</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0095&quot;,
+  &quot;last_turn&quot;: &quot;turn-0095&quot;,
+  &quot;source_root&quot;: &quot;0706e661923fdd79ab1017b39f45c2ab3b243e28a7b2e90ad9ec06b5c732b5c9&quot;
+}</pre></details><details><summary>omit · turn-0078 → turn-0078</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0078&quot;,
+  &quot;last_turn&quot;: &quot;turn-0078&quot;,
+  &quot;source_root&quot;: &quot;19a7b19048cbc1d4c8f139e95614dd1d2e2358457bf25270cef26a619039059a&quot;
+}</pre></details><details><summary>extract · turn-0096 → turn-0096</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0096&quot;,
+  &quot;last_turn&quot;: &quot;turn-0096&quot;,
+  &quot;source_root&quot;: &quot;ad87e8934852018ce95e26bdcc8ea590d6f21db068c11f0fd07445e9b331a2f8&quot;
+}</pre></details><details><summary>digest · turn-0096 → turn-0096</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0096&quot;,
+  &quot;last_turn&quot;: &quot;turn-0096&quot;,
+  &quot;source_root&quot;: &quot;ad87e8934852018ce95e26bdcc8ea590d6f21db068c11f0fd07445e9b331a2f8&quot;
+}</pre></details><details><summary>omit · turn-0079 → turn-0079</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0079&quot;,
+  &quot;last_turn&quot;: &quot;turn-0079&quot;,
+  &quot;source_root&quot;: &quot;2dd2f4cb1df7587fd1b22332a0e25b4b1e4495fb72b8416b6cc40174ab6131db&quot;
+}</pre></details><details><summary>extract · turn-0097 → turn-0097</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0097&quot;,
+  &quot;last_turn&quot;: &quot;turn-0097&quot;,
+  &quot;source_root&quot;: &quot;155394de646b90e073710ee83114106a7051762bc957861f850dffc4c3d138cd&quot;
+}</pre></details><details><summary>digest · turn-0097 → turn-0097</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0097&quot;,
+  &quot;last_turn&quot;: &quot;turn-0097&quot;,
+  &quot;source_root&quot;: &quot;155394de646b90e073710ee83114106a7051762bc957861f850dffc4c3d138cd&quot;
+}</pre></details><details><summary>omit · turn-0080 → turn-0080</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0080&quot;,
+  &quot;last_turn&quot;: &quot;turn-0080&quot;,
+  &quot;source_root&quot;: &quot;ebdf8d40e3eb3eaa88fa503a69fad110f85f3971a389a3d381ab16d29d8c0407&quot;
+}</pre></details><details><summary>extract · turn-0098 → turn-0098</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0098&quot;,
+  &quot;last_turn&quot;: &quot;turn-0098&quot;,
+  &quot;source_root&quot;: &quot;dfadab9aa06a17d5583abc07b2d7108b6da8e4dcae6183ec2fcbc110e7858bfc&quot;
+}</pre></details><details><summary>digest · turn-0098 → turn-0098</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0098&quot;,
+  &quot;last_turn&quot;: &quot;turn-0098&quot;,
+  &quot;source_root&quot;: &quot;dfadab9aa06a17d5583abc07b2d7108b6da8e4dcae6183ec2fcbc110e7858bfc&quot;
+}</pre></details><details><summary>omit · turn-0081 → turn-0081</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0081&quot;,
+  &quot;last_turn&quot;: &quot;turn-0081&quot;,
+  &quot;source_root&quot;: &quot;52b0e4d65dd27ffcc0eff074570af72d56bafd49fa669c5886b025037cfcb356&quot;
+}</pre></details><details><summary>extract · turn-0099 → turn-0099</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0099&quot;,
+  &quot;last_turn&quot;: &quot;turn-0099&quot;,
+  &quot;source_root&quot;: &quot;5a8f48aa597f81ede9a7f31f6b8f3844277bcce2828fa83fff35fac9b34ef35d&quot;
+}</pre></details><details><summary>digest · turn-0099 → turn-0099</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0099&quot;,
+  &quot;last_turn&quot;: &quot;turn-0099&quot;,
+  &quot;source_root&quot;: &quot;5a8f48aa597f81ede9a7f31f6b8f3844277bcce2828fa83fff35fac9b34ef35d&quot;
+}</pre></details><details><summary>omit · turn-0082 → turn-0082</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0082&quot;,
+  &quot;last_turn&quot;: &quot;turn-0082&quot;,
+  &quot;source_root&quot;: &quot;27cdb19ade634614d1009e326bb6c90e762f5251d1f53e7f29d8a1a63e25c7a3&quot;
+}</pre></details><details><summary>extract · turn-0100 → turn-0100</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0100&quot;,
+  &quot;last_turn&quot;: &quot;turn-0100&quot;,
+  &quot;source_root&quot;: &quot;982911274628ecb3b3f24bfab746377f4e705ce0036b8678bbd01fb1f182cd51&quot;
+}</pre></details><details><summary>digest · turn-0100 → turn-0100</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0100&quot;,
+  &quot;last_turn&quot;: &quot;turn-0100&quot;,
+  &quot;source_root&quot;: &quot;982911274628ecb3b3f24bfab746377f4e705ce0036b8678bbd01fb1f182cd51&quot;
+}</pre></details><details><summary>omit · turn-0083 → turn-0083</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0083&quot;,
+  &quot;last_turn&quot;: &quot;turn-0083&quot;,
+  &quot;source_root&quot;: &quot;db9cbbf80fb9938fd269f15fc885a76d5905a38ed3408857b4f66fa68390552d&quot;
+}</pre></details><details><summary>extract · turn-0101 → turn-0101</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0101&quot;,
+  &quot;last_turn&quot;: &quot;turn-0101&quot;,
+  &quot;source_root&quot;: &quot;5c1ea54173f59bd43b6ff8cb897966dad528bccaeb6f5c078f85c10ea4d8f25b&quot;
+}</pre></details><details><summary>digest · turn-0101 → turn-0101</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0101&quot;,
+  &quot;last_turn&quot;: &quot;turn-0101&quot;,
+  &quot;source_root&quot;: &quot;5c1ea54173f59bd43b6ff8cb897966dad528bccaeb6f5c078f85c10ea4d8f25b&quot;
+}</pre></details><details><summary>omit · turn-0084 → turn-0084</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0084&quot;,
+  &quot;last_turn&quot;: &quot;turn-0084&quot;,
+  &quot;source_root&quot;: &quot;d398056d5f5eb474a899be89acc13331edf12e468193e3b20d4848b2d2968c4d&quot;
+}</pre></details><details><summary>extract · turn-0102 → turn-0102</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0102&quot;,
+  &quot;last_turn&quot;: &quot;turn-0102&quot;,
+  &quot;source_root&quot;: &quot;3582fee79cd92eed11a8adf52ea2d326e1776ad21b733856ea07052e8db41ec6&quot;
+}</pre></details><details><summary>digest · turn-0102 → turn-0102</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0102&quot;,
+  &quot;last_turn&quot;: &quot;turn-0102&quot;,
+  &quot;source_root&quot;: &quot;3582fee79cd92eed11a8adf52ea2d326e1776ad21b733856ea07052e8db41ec6&quot;
+}</pre></details><details><summary>omit · turn-0085 → turn-0085</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0085&quot;,
+  &quot;last_turn&quot;: &quot;turn-0085&quot;,
+  &quot;source_root&quot;: &quot;1c54b964da9e34cf4135f6f84b60be53f17be3127e6ef0c0f14fcf9791c2e456&quot;
+}</pre></details><details><summary>extract · turn-0103 → turn-0103</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0103&quot;,
+  &quot;last_turn&quot;: &quot;turn-0103&quot;,
+  &quot;source_root&quot;: &quot;d3c0e574308086c6bd797f180cfd9a49a75ff7b476cc308fbb17904aaeb86d8c&quot;
+}</pre></details><details><summary>digest · turn-0103 → turn-0103</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0103&quot;,
+  &quot;last_turn&quot;: &quot;turn-0103&quot;,
+  &quot;source_root&quot;: &quot;d3c0e574308086c6bd797f180cfd9a49a75ff7b476cc308fbb17904aaeb86d8c&quot;
+}</pre></details><details><summary>omit · turn-0086 → turn-0086</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0086&quot;,
+  &quot;last_turn&quot;: &quot;turn-0086&quot;,
+  &quot;source_root&quot;: &quot;3a53022810b3c0a553e7bb668caa73ab3cd164aacb027dbfc437c74a7199a550&quot;
+}</pre></details><details><summary>extract · turn-0104 → turn-0104</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0104&quot;,
+  &quot;last_turn&quot;: &quot;turn-0104&quot;,
+  &quot;source_root&quot;: &quot;d79f1548a033ae11387b2ca072509ad336bd226284ee06a1f7c7d8cdd4f4336c&quot;
+}</pre></details><details><summary>digest · turn-0104 → turn-0104</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0104&quot;,
+  &quot;last_turn&quot;: &quot;turn-0104&quot;,
+  &quot;source_root&quot;: &quot;d79f1548a033ae11387b2ca072509ad336bd226284ee06a1f7c7d8cdd4f4336c&quot;
+}</pre></details><details><summary>omit · turn-0087 → turn-0087</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0087&quot;,
+  &quot;last_turn&quot;: &quot;turn-0087&quot;,
+  &quot;source_root&quot;: &quot;acfe48548e241ea711a38734e3f69b0899aebd0be361605e03576a8fe2e8eb3f&quot;
+}</pre></details><details><summary>extract · turn-0105 → turn-0105</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0105&quot;,
+  &quot;last_turn&quot;: &quot;turn-0105&quot;,
+  &quot;source_root&quot;: &quot;969d974ca86f341ecf7bdbcc09aed2079ab29d319250fc9165a25b1c622e5a5b&quot;
+}</pre></details><details><summary>digest · turn-0105 → turn-0105</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0105&quot;,
+  &quot;last_turn&quot;: &quot;turn-0105&quot;,
+  &quot;source_root&quot;: &quot;969d974ca86f341ecf7bdbcc09aed2079ab29d319250fc9165a25b1c622e5a5b&quot;
+}</pre></details><details><summary>omit · turn-0088 → turn-0088</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0088&quot;,
+  &quot;last_turn&quot;: &quot;turn-0088&quot;,
+  &quot;source_root&quot;: &quot;4a043291e91861e6d209cacf9232cff79bfc3ca9155125362b277a5241557b2e&quot;
+}</pre></details><details><summary>extract · turn-0106 → turn-0106</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0106&quot;,
+  &quot;last_turn&quot;: &quot;turn-0106&quot;,
+  &quot;source_root&quot;: &quot;eb5107c14aac8b99f8a2a3723853673e0e22656b90d7a654b0bfc6a245e36938&quot;
+}</pre></details><details><summary>digest · turn-0106 → turn-0106</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0106&quot;,
+  &quot;last_turn&quot;: &quot;turn-0106&quot;,
+  &quot;source_root&quot;: &quot;eb5107c14aac8b99f8a2a3723853673e0e22656b90d7a654b0bfc6a245e36938&quot;
+}</pre></details><details><summary>omit · turn-0089 → turn-0089</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0089&quot;,
+  &quot;last_turn&quot;: &quot;turn-0089&quot;,
+  &quot;source_root&quot;: &quot;96cf7a7437d7df3bbe27b102038ab26ee88df8fabe1a09e2032930a049b41bb7&quot;
+}</pre></details><details><summary>extract · turn-0107 → turn-0107</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0107&quot;,
+  &quot;last_turn&quot;: &quot;turn-0107&quot;,
+  &quot;source_root&quot;: &quot;6c4b6182959985926eb329a3e8d60e03874618f936e93d0a0e78b7325202a91a&quot;
+}</pre></details><details><summary>digest · turn-0107 → turn-0107</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0107&quot;,
+  &quot;last_turn&quot;: &quot;turn-0107&quot;,
+  &quot;source_root&quot;: &quot;6c4b6182959985926eb329a3e8d60e03874618f936e93d0a0e78b7325202a91a&quot;
+}</pre></details><details><summary>omit · turn-0090 → turn-0090</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0090&quot;,
+  &quot;last_turn&quot;: &quot;turn-0090&quot;,
+  &quot;source_root&quot;: &quot;a19dadf5712140a627d24a137217e992eb0513d994aa07cc30dfa0d18018e601&quot;
+}</pre></details><details><summary>extract · turn-0108 → turn-0108</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0108&quot;,
+  &quot;last_turn&quot;: &quot;turn-0108&quot;,
+  &quot;source_root&quot;: &quot;035098369aebd238b6680dbc77939444ba0eda696e8b5e037ebee33c6aea1055&quot;
+}</pre></details><details><summary>digest · turn-0108 → turn-0108</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0108&quot;,
+  &quot;last_turn&quot;: &quot;turn-0108&quot;,
+  &quot;source_root&quot;: &quot;035098369aebd238b6680dbc77939444ba0eda696e8b5e037ebee33c6aea1055&quot;
+}</pre></details><details><summary>omit · turn-0091 → turn-0091</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0091&quot;,
+  &quot;last_turn&quot;: &quot;turn-0091&quot;,
+  &quot;source_root&quot;: &quot;5bbddf79e77f57a67c46bd293bd7592ad25c71fc7a463de1da7bd906875c3346&quot;
+}</pre></details><details><summary>extract · turn-0109 → turn-0109</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0109&quot;,
+  &quot;last_turn&quot;: &quot;turn-0109&quot;,
+  &quot;source_root&quot;: &quot;b8784803cf85ac7cf75f55b94813f9b305f6735cf2bb9d79dee1d9d7dd49f3ed&quot;
+}</pre></details><details><summary>digest · turn-0109 → turn-0109</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0109&quot;,
+  &quot;last_turn&quot;: &quot;turn-0109&quot;,
+  &quot;source_root&quot;: &quot;b8784803cf85ac7cf75f55b94813f9b305f6735cf2bb9d79dee1d9d7dd49f3ed&quot;
+}</pre></details><details><summary>omit · turn-0092 → turn-0092</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0092&quot;,
+  &quot;last_turn&quot;: &quot;turn-0092&quot;,
+  &quot;source_root&quot;: &quot;62582bb7801fb6b1bb2a92ff307824286e1b364b5ffdbe7138e8f5a21a7a98d7&quot;
+}</pre></details><details><summary>extract · turn-0110 → turn-0110</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0110&quot;,
+  &quot;last_turn&quot;: &quot;turn-0110&quot;,
+  &quot;source_root&quot;: &quot;1020fbb96611ccbacb9f304662bb7ddcab8083ee9ff5763c33ce708386e44d66&quot;
+}</pre></details><details><summary>digest · turn-0110 → turn-0110</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0110&quot;,
+  &quot;last_turn&quot;: &quot;turn-0110&quot;,
+  &quot;source_root&quot;: &quot;1020fbb96611ccbacb9f304662bb7ddcab8083ee9ff5763c33ce708386e44d66&quot;
+}</pre></details><details><summary>omit · turn-0093 → turn-0093</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0093&quot;,
+  &quot;last_turn&quot;: &quot;turn-0093&quot;,
+  &quot;source_root&quot;: &quot;8bb01ddecacb7b79863f0c74acedec65fb9ed25f5459220f87ba1dc4caa565a1&quot;
+}</pre></details><details><summary>extract · turn-0111 → turn-0111</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0111&quot;,
+  &quot;last_turn&quot;: &quot;turn-0111&quot;,
+  &quot;source_root&quot;: &quot;f8501d3ce8a8e27a82ae58991dbc0fb20f9d0a5a6fa6ec77f417fc8cf320338d&quot;
+}</pre></details><details><summary>digest · turn-0111 → turn-0111</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0111&quot;,
+  &quot;last_turn&quot;: &quot;turn-0111&quot;,
+  &quot;source_root&quot;: &quot;f8501d3ce8a8e27a82ae58991dbc0fb20f9d0a5a6fa6ec77f417fc8cf320338d&quot;
+}</pre></details><details><summary>omit · turn-0094 → turn-0094</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0094&quot;,
+  &quot;last_turn&quot;: &quot;turn-0094&quot;,
+  &quot;source_root&quot;: &quot;eab0ea10fdcd7510863183f45a29a0ce0b289303efaf699b1e8e2aba01bddfdd&quot;
+}</pre></details><details><summary>extract · turn-0112 → turn-0112</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0112&quot;,
+  &quot;last_turn&quot;: &quot;turn-0112&quot;,
+  &quot;source_root&quot;: &quot;61f83e0d985279b8da4c975741f856dc5095bb0c0673c40f2c267c7d7ab12707&quot;
+}</pre></details><details><summary>digest · turn-0112 → turn-0112</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0112&quot;,
+  &quot;last_turn&quot;: &quot;turn-0112&quot;,
+  &quot;source_root&quot;: &quot;61f83e0d985279b8da4c975741f856dc5095bb0c0673c40f2c267c7d7ab12707&quot;
+}</pre></details><details><summary>omit · turn-0095 → turn-0095</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0095&quot;,
+  &quot;last_turn&quot;: &quot;turn-0095&quot;,
+  &quot;source_root&quot;: &quot;0706e661923fdd79ab1017b39f45c2ab3b243e28a7b2e90ad9ec06b5c732b5c9&quot;
+}</pre></details><details><summary>extract · turn-0113 → turn-0113</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0113&quot;,
+  &quot;last_turn&quot;: &quot;turn-0113&quot;,
+  &quot;source_root&quot;: &quot;8880c511574bcd7f6a96d918481360a5e9624f564ac52146ce294dc85159d7cf&quot;
+}</pre></details><details><summary>digest · turn-0113 → turn-0113</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0113&quot;,
+  &quot;last_turn&quot;: &quot;turn-0113&quot;,
+  &quot;source_root&quot;: &quot;8880c511574bcd7f6a96d918481360a5e9624f564ac52146ce294dc85159d7cf&quot;
+}</pre></details><details><summary>omit · turn-0096 → turn-0096</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0096&quot;,
+  &quot;last_turn&quot;: &quot;turn-0096&quot;,
+  &quot;source_root&quot;: &quot;ad87e8934852018ce95e26bdcc8ea590d6f21db068c11f0fd07445e9b331a2f8&quot;
+}</pre></details><details><summary>extract · turn-0114 → turn-0114</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0114&quot;,
+  &quot;last_turn&quot;: &quot;turn-0114&quot;,
+  &quot;source_root&quot;: &quot;fc107452c5b6c88d9880b60c9e8bd858e7d60fcf9961ca15ab8ed36ba71ca60c&quot;
+}</pre></details><details><summary>digest · turn-0114 → turn-0114</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0114&quot;,
+  &quot;last_turn&quot;: &quot;turn-0114&quot;,
+  &quot;source_root&quot;: &quot;fc107452c5b6c88d9880b60c9e8bd858e7d60fcf9961ca15ab8ed36ba71ca60c&quot;
+}</pre></details><details><summary>omit · turn-0097 → turn-0097</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0097&quot;,
+  &quot;last_turn&quot;: &quot;turn-0097&quot;,
+  &quot;source_root&quot;: &quot;155394de646b90e073710ee83114106a7051762bc957861f850dffc4c3d138cd&quot;
+}</pre></details><details><summary>extract · turn-0115 → turn-0115</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0115&quot;,
+  &quot;last_turn&quot;: &quot;turn-0115&quot;,
+  &quot;source_root&quot;: &quot;66c20fe3107d66fe186af230eee674f2317387399a0431a70d3106718ff9fb0b&quot;
+}</pre></details><details><summary>digest · turn-0115 → turn-0115</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0115&quot;,
+  &quot;last_turn&quot;: &quot;turn-0115&quot;,
+  &quot;source_root&quot;: &quot;66c20fe3107d66fe186af230eee674f2317387399a0431a70d3106718ff9fb0b&quot;
+}</pre></details><details><summary>omit · turn-0098 → turn-0098</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0098&quot;,
+  &quot;last_turn&quot;: &quot;turn-0098&quot;,
+  &quot;source_root&quot;: &quot;dfadab9aa06a17d5583abc07b2d7108b6da8e4dcae6183ec2fcbc110e7858bfc&quot;
+}</pre></details><details><summary>extract · turn-0116 → turn-0116</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0116&quot;,
+  &quot;last_turn&quot;: &quot;turn-0116&quot;,
+  &quot;source_root&quot;: &quot;63a25bed1aabed2388d4aaf04a7c90d50cc6b83a6ae6ddae2e0e8bc27d8e9ba4&quot;
+}</pre></details><details><summary>digest · turn-0116 → turn-0116</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0116&quot;,
+  &quot;last_turn&quot;: &quot;turn-0116&quot;,
+  &quot;source_root&quot;: &quot;63a25bed1aabed2388d4aaf04a7c90d50cc6b83a6ae6ddae2e0e8bc27d8e9ba4&quot;
+}</pre></details><details><summary>omit · turn-0099 → turn-0099</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0099&quot;,
+  &quot;last_turn&quot;: &quot;turn-0099&quot;,
+  &quot;source_root&quot;: &quot;5a8f48aa597f81ede9a7f31f6b8f3844277bcce2828fa83fff35fac9b34ef35d&quot;
+}</pre></details><details><summary>extract · turn-0117 → turn-0117</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0117&quot;,
+  &quot;last_turn&quot;: &quot;turn-0117&quot;,
+  &quot;source_root&quot;: &quot;2cd76ab78c5415b780a26d54dbab8749f87b97c441a88f743bce112793450a09&quot;
+}</pre></details><details><summary>digest · turn-0117 → turn-0117</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0117&quot;,
+  &quot;last_turn&quot;: &quot;turn-0117&quot;,
+  &quot;source_root&quot;: &quot;2cd76ab78c5415b780a26d54dbab8749f87b97c441a88f743bce112793450a09&quot;
+}</pre></details><details><summary>omit · turn-0100 → turn-0100</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0100&quot;,
+  &quot;last_turn&quot;: &quot;turn-0100&quot;,
+  &quot;source_root&quot;: &quot;982911274628ecb3b3f24bfab746377f4e705ce0036b8678bbd01fb1f182cd51&quot;
+}</pre></details><details><summary>extract · turn-0118 → turn-0118</summary><pre>{
+  &quot;action&quot;: &quot;extract&quot;,
+  &quot;tier&quot;: 1,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0118&quot;,
+  &quot;last_turn&quot;: &quot;turn-0118&quot;,
+  &quot;source_root&quot;: &quot;19959dd09346d5f4946cdd33b8fcd0929dbffb7369afb34a42d38dee7227fcec&quot;
+}</pre></details><details><summary>digest · turn-0118 → turn-0118</summary><pre>{
+  &quot;action&quot;: &quot;digest&quot;,
+  &quot;tier&quot;: 2,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0118&quot;,
+  &quot;last_turn&quot;: &quot;turn-0118&quot;,
+  &quot;source_root&quot;: &quot;19959dd09346d5f4946cdd33b8fcd0929dbffb7369afb34a42d38dee7227fcec&quot;
+}</pre></details><details><summary>omit · turn-0101 → turn-0101</summary><pre>{
+  &quot;action&quot;: &quot;omit&quot;,
+  &quot;tier&quot;: 3,
+  &quot;source_count&quot;: 1,
+  &quot;first_turn&quot;: &quot;turn-0101&quot;,
+  &quot;last_turn&quot;: &quot;turn-0101&quot;,
+  &quot;source_root&quot;: &quot;5c1ea54173f59bd43b6ff8cb897966dad528bccaeb6f5c078f85c10ea4d8f25b&quot;
+}</pre></details></div></details></section><section class="panel"><h2>Reproduce and inspect</h2><pre>make demo
+make test
+make benchmark RUNS=3</pre><p><a href="summary.json">Summary and methodology</a> · <a href="samples.jsonl">Every measured sample</a> · <a href="traces.jsonl">OTel spans</a></p><h2>Provider measurements</h2><p class="muted">Actual offline API calls: 0. Actual offline model cost: $0. Use the explicit live streaming command for observed TTFT, provider token usage and cached tokens. A stable fingerprint does not establish a provider cache hit.</p><h2>Token budget boundary</h2><p class="muted">Counts use the shipped o200k tokenizer over canonical application JSON. Provider framing/tokenization can differ. Output and framing reserves are explicit; oversized protected content fails rather than silently disappearing.</p></section></div><footer>Generated from recorded synthetic-workload evidence. No scripts or external resources. Raw source is discarded by compaction; keep a separate source log if forensic replay is required.</footer></main></body></html>

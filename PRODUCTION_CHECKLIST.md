@@ -1,29 +1,31 @@
-# Standard Production Checklist
+# Production checklist and evidence
 
-**Status: planning checklist.** The boxes below are acceptance criteria for future implementation, not a claim that files, commands, security controls, tests, or measurements exist today.
+## Implemented and checked
 
-## Reproducible setup
+- [x] Public source, raw SDK integration, explicit state reducer and compaction policy.
+- [x] Docker Compose, Makefile, dependency hashes, digest-pinned base image and no-key demo.
+- [x] Single-command demo/test verification; runtime network disabled for offline containers.
+- [x] Non-root container defaults, read-only root, resource limits and dropped capabilities.
+- [x] Offline tokenizer packaged with source/license notices and integrity checks.
+- [x] Atomic task-state revisions, protected budget failure and complete historical tool groups.
+- [x] Matched 120-turn benchmark with all samples, source hashes, environment and limitations.
+- [x] Provider streaming, first-text latency and completed-response token usage.
+- [x] Cache read/write accounting, labeled prices, null estimates for unknown write costs.
+- [x] Current cache options and reasoning controls tested through actual SDK serialization.
+- [x] Provider preflight rejects overflow before generation.
+- [x] Native compact output forwarded without selecting, pruning or reordering items.
+- [x] Exact-value/source grading, stale revisions, malformed streams, cancellation and timeouts.
+- [x] Instance-scoped OTel spans without raw bodies or exception payloads in trace JSONL.
+- [x] Python 3.12–3.14 CI, no-network container execution and installed-wheel smoke verification.
+- [x] Failure modes, architecture, public usage examples and Spanish overview.
 
-- [ ] Add a `docker-compose.yml`, `Makefile`, documented prerequisites, pinned dependencies, and a credential-free `.env.example`.
-- [ ] Make `make demo` prepare its environment and run a deterministic offline demonstration in one command.
-- [ ] Make `make test` prepare its environment and run meaningful offline regression checks in one command.
-- [ ] Offer live-model runs separately, with explicit provider configuration, expected costs, and no committed credentials.
+## Deliberately unclaimed
 
-## Inspectable mechanics
+- [ ] Live cache hit rates and p50/p95 TTFT across 100+ turns.
+- [ ] Live baseline-versus-optimized answer quality and price/performance measurements.
+- [ ] Adversarial model evaluation, automatic fact extraction or semantic equivalence grading.
+- [ ] Durable or distributed state; additional model-provider adapters; multimodal input.
 
-- [ ] In the tool loop, context window, hierarchical memory, and multi-agent orchestration repositories, implement control loops, state reducers, context compaction, memory policies, and coordination directly against raw model SDKs; do not use LangChain, LlamaIndex, or another orchestration framework for the core mechanics.
-- [ ] Document architecture, execution budgets, tradeoffs, failure modes, and the boundaries of what has actually been verified.
-
-## Observability and benchmarks
-
-- [ ] Emit OpenTelemetry spans for every model call and tool execution, linked to the request/run trace.
-- [ ] Record model/provider configuration, outcome, retry count, duration, input/output/cached tokens where available, and estimated cost without recording secrets or sensitive payloads by default.
-- [ ] Aggregate p50/p95 request latency and streaming TTFT, token usage, and estimated USD per 1,000 requests. Mark unavailable metrics as unavailable and disclose pricing date, currency, and assumptions.
-- [ ] Publish baseline-versus-optimized results using the same versioned workload, configuration, environment, concurrency, sample counts, and declared quality checks. Include raw results and exact reproduction instructions.
-- [ ] Keep unmeasured cells labeled **Not yet measured**; distinguish targets and candidate failure modes from observations and verified behavior.
-
-## Regression and delivery
-
-- [ ] Add deterministic offline fixtures that check observable behavior and meaningful failure cases.
-- [ ] Add CI for the documented checks, with optional live-model evaluation kept explicit and separately configured.
-- [ ] Document project-specific acceptance criteria and any unsupported environments or residual limitations.
+Offline and mocked-transport tests cannot establish live provider behavior. Tools are
+historical records here, so no tool-execution span is claimed. The separate tool-loop
+repository implements execution. See the README for exact scope and reproduction.
